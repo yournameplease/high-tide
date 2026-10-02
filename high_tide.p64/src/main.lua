@@ -1,13 +1,22 @@
-SCREEN_W = 480 / 1
-SCREEN_H = 270 / 1
+SCREEN_W = 480
+SCREEN_H = 270
+CENTER_X = SCREEN_W / 2
+CENTER_Y = SCREEN_H / 2
+TILE_W = 16
+TILE_H = 16
+TILE_FACTOR = vec(TILE_W, TILE_H)
+
+require "src.math"
+require "src.util.log"
+---@alias vec2 userdata
 
 local dtm = require "src.util.draw_target_manager"
 local lighting = require "src.lighting"
+local world = require "src.world"
 
--- local SCREEN_W = 480
--- local SCREEN_H = 270
-local C_X = SCREEN_W / 2
-local C_Y = SCREEN_H / 2
+CONFIG = {
+  LOG_LEVEL = "DEBUG",  
+}
 
 local COLOR_TABLE_ADDRS = {
   [0] = 0x8000,
@@ -16,9 +25,9 @@ local COLOR_TABLE_ADDRS = {
   0xB000,
 }
 
-
 local global_t = 0
 local screen_buffer
+local game = {}
 
 function apply_color_table(color_table_sprite, idx)
   idx = idx or 0
@@ -34,46 +43,24 @@ end
 
 
 function _init()
-  x = 232
-  y = 10
-  t = 0
-
-  local m = fetch(DATP.."map/0.map")
-  bg = m[1].bmp
-  tiles = m[2].bmp
-  fg = m[3].bmp
+  game.world = world.new(DATP.."map/0.map")
 
   apply_color_table(8)
   palt(0, true)
-  -- vid(3)
-  --
+
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
 end
 
 function _draw()
   dtm.push_target(screen_buffer)
 
+  game.world:draw()
   
-  cls(1)   
-  -- rrectfill(x+2,y+15,12,4,1,19) -- draw a 12x4 px shadow with colour 19 (dark green)
-  local index = 17 + (t //20 ) % 4
-
-  local cam_x = x - C_X
-  local cam_y = y - C_Y
-  camera(cam_x, cam_y)
-  
-  map(bg, 0, 0, 0 - x / 10)
-  map(tiles, 0, 0)
-
-  spr(0x30000 | index,x, y + (t//20%2), hflip)
-  map(fg, 0, 0, x / 10)
-
-
   camera()
-  local depth = math.log(y + 10) / 20
+  local depth = math.log(game.world.player.pos.y + 10) / 20
 
   lighting.clear()
-  lighting.light_disks(C_X, C_Y, 20, 10 / depth)
+  lighting.light_disks(CENTER_X, CENTER_Y, 20, 10 / depth)
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 
@@ -93,12 +80,5 @@ end
  
 function _update()
   global_t = global_t + 1
-  local any_move = false
-  if (btn(0))then any_move = true x = x - 2 hflip = true end
-  if (btn(1))then any_move = true x = x + 2 hflip = false end
-  if (btn(2))then any_move = true y = y - 2 end
-  if (btn(3))then any_move = true y = y + 2 end
-
-  if any_move then t = t + 1
-  else t = t // 2 end
+  game.world:update()
 end

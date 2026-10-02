@@ -6,6 +6,15 @@ function mod_t(a, b)
   return (a - 1) % b + 1
 end
 
+--- rotate v by picotron angle (turns)
+---@param v vec2
+---@param a number
+function vec_rot(v, a)
+  local cos_a = cos(a)
+  local sin_a = sin(a)
+  return vec(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a)
+end
+
 function vec_equals(v, u)
   return v.x == u.x and v.y == u.y 
 end

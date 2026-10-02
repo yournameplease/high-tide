@@ -2,11 +2,21 @@ SCREEN_W = 480
 SCREEN_H = 270
 CENTER_X = SCREEN_W / 2
 CENTER_Y = SCREEN_H / 2
+TILE_W = 16
+TILE_H = 16
+TILE_FACTOR = vec(TILE_W, TILE_H)
+
+require "src.math"
+require "src.util.log"
+---@alias vec2 userdata
 
 local dtm = require "src.util.draw_target_manager"
 local lighting = require "src.lighting"
 local world = require "src.world"
 
+CONFIG = {
+  LOG_LEVEL = "DEBUG",  
+}
 
 local COLOR_TABLE_ADDRS = {
   [0] = 0x8000,
@@ -47,7 +57,7 @@ function _draw()
   game.world:draw()
   
   camera()
-  local depth = math.log(game.world.player.y + 10) / 20
+  local depth = math.log(game.world.player.pos.y + 10) / 20
 
   lighting.clear()
   lighting.light_disks(CENTER_X, CENTER_Y, 20, 10 / depth)
