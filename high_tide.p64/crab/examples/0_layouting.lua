@@ -1,0 +1,60 @@
+local crab = require"crab/crab_gui/gui"
+local crab_layout = require"crab/crab_gui/layout"
+local sw = require"crab/crab_gui/std_widgets"
+local text_rendering = require"crab/crab_gui/text_rendering"
+local gui = crab.new()
+local font_cache = text_rendering.new_font_cache()
+
+local left_panel_rect =
+	crab_layout.new_rect(vec(2, 2), vec(-1, -2), vec(0, 0), vec(0.3, 1))
+
+local right_panel_rect =
+	crab_layout.new_rect(vec(1, 2), vec(-2, -2), vec(0.3, 0), vec(1, 1))
+
+local upper_left_panel_rect =
+	crab_layout.new_rect(vec(2, 2), vec(-2, 20), vec(0, 0), vec(1, 0))
+
+local lower_left_panel_rect = crab_layout.new_rect(vec(2, 22), vec(-2, -2))
+
+local font_style = text_rendering.default_style{col = 7, halign = "center", valign = "center"}
+
+local function do_gui()
+	gui:push_rect(crab_layout.new_rect_at(
+		vec(0.5, 0.5),
+		vec(math.cos(t() * 0.7) * 210 + 270, math.sin(t() * 0.8652) * 105 + 165)
+	))
+	sw.panel(gui, 1, 6)
+	
+	gui:push_rect(left_panel_rect)
+	sw.panel(gui, 16, 2)
+	
+	gui:push_rect(upper_left_panel_rect)
+	sw.panel(gui, 1, 2)
+	sw.text(gui, font_cache, "\^o0ffWow!", font_style)
+	gui:pop_rect()
+	gui:push_rect(lower_left_panel_rect)
+	sw.panel(gui, 1, 2)
+	gui:pop_rect()
+	
+	gui:pop_rect()
+	
+	gui:push_rect(right_panel_rect)
+	sw.panel(gui, 16, 2)
+	gui:pop_rect()
+	
+	gui:pop_rect()
+end
+
+function _update()
+	gui:flush()
+	do_gui()
+	gui:event_step()
+end
+
+function _draw()
+	cls()
+	gui:draw()
+	print(("\^o0ffCPU: %.2f%%"):format(stat(1) * 100), 1, 1, 7)
+end
+
+require"crab/error_explorer"
