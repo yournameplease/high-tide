@@ -1,9 +1,11 @@
+SCREEN_W = 480 / 1
+SCREEN_H = 270 / 1
+
 local dtm = require "src.util.draw_target_manager"
+local lighting = require "src.lighting"
 
 -- local SCREEN_W = 480
 -- local SCREEN_H = 270
-local SCREEN_W = 480 / 1
-local SCREEN_H = 270 / 1
 local C_X = SCREEN_W / 2
 local C_Y = SCREEN_H / 2
 
@@ -65,19 +67,26 @@ function _draw()
 
   local w = 32 * 2
   local h = 16 * 2
-  sspr(0x30000 | index, 0, 0, 32, 16, x, y + (t//20%2), w, h, hflip) -- draw bunny; (x/8%2) is for hopping motion
+  -- sspr(0x30000 | index, 0, 0, 32, 16, x, y + (t//20%2), w, h, hflip) -- draw bunny; (x/8%2) is for hopping motion
+  spr(0x30000 | index,x, y + (t//20%2), hflip) -- draw bunny; (x/8%2) is for hopping motion
 
   map(fg, 0, 0, x / 10)
 
 
   camera()
+  -- local depth = math.log(y + 10) / 20
   local depth = math.log(y + 10) / 20
-  for i = 1, 6 do 
-    fillp(0xA5A5)
-    circfill(C_X, C_Y, 20 + 10 * i / depth, 0x800000000 | 36)
-    fillp()
-    circfill(C_X, C_Y, 30 + 10 * i / depth, 0x800000000 | 36)
-  end
+  -- for i = 1, 6 do 
+  --   fillp(0xA5A5)
+  --   circfill(C_X, C_Y, 20 + 10 * i / depth, 0x800000000 | 36)
+  --   fillp()
+  --   circfill(C_X, C_Y, 30 + 10 * i / depth, 0x800000000 | 36)
+  -- end
+
+  lighting.clear()
+  lighting.light_disks(C_X, C_Y, 20, 10 / depth)
+  -- lighting.light_rows(100, 30)
+  lighting.draw_lighting()
 
   dtm.pop()
 
