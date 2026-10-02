@@ -43,7 +43,7 @@ end
 
 
 function _init()
-  game.world = world.new(DATP.."map/0.map")
+  game.world = world.new("map/0.map")
 
   apply_color_table(8)
   palt(0, true)

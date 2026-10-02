@@ -9,10 +9,6 @@ function require(name)
     return _modules[name]
 end
 
-DATP = ""
-cp("/projects/games/high-tide/src", "src")
-cp("/projects/games/high-tide/lib", "lib")
-
 include "src/main.lua"
 
 include "lib/profiler.lua"
