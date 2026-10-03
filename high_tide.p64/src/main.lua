@@ -15,6 +15,13 @@ local colors = require "src.colors"
 local lighting = require "src.lighting"
 local world = require "src.world"
 
+local FLASHLIGHT_STEP_FACTOR = 5
+-- in pixels
+local FLASHLIGHT_STEP_MIN = 10
+local FLASHLIGHT_STEP_MAX = 50
+local FLASHLIGHT_AMP = 10
+local FLASHLIGHT_FREQ = 60 * 10
+
 CONFIG = {
   LOG_LEVEL = "DEBUG",  
 }
@@ -63,7 +70,11 @@ function _draw()
 
   lighting.clear()
   lighting.light_rows(-y * TILE_H, TILE_H * 25)
-  lighting.light_disks(CENTER_X, CENTER_Y, 20, 10 / depth)
+
+
+  local flashlight_step = max(FLASHLIGHT_STEP_MAX - y / FLASHLIGHT_STEP_FACTOR, FLASHLIGHT_STEP_MIN)
+  local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
+  lighting.light_disks(CENTER_X, CENTER_Y, 20 + flashlight_offset, flashlight_step)
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 
