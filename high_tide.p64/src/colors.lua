@@ -42,8 +42,10 @@ COLORS = {
 }
 
 for i = 1, 9 do
-  COLORS.DARK[i] = COLORTABLE_BASE + i - 1
+  COLORS.DARK[i] = COLORTABLE_BASE + i
 end
+COLORS.DARK[0] = COLORTABLE_BASE + 0 -- darken by 0 == transparent
+palt(COLORS.DARK[0], true)
 
 assert(COLORTABLE_BASE + #COLORS.DARK < 64, "too many colors!  move them around")
 
@@ -56,6 +58,10 @@ function colors.build_color_palette()
   for i, c in ipairs(ASTRIDA_SOLSETURS) do
     pal(BASE_COLOR + #AZURE_ABYSS + i, c, 2)
   end
+  for i, c in ipairs(COLORS.DARK) do
+    local f = flr(255 - i / 9 * 255)
+    pal(c, f | f << 8 | f << 16 , 2)
+  end
 
   local out = userdata("i32", 64):peek(0x005000)
   store("/ram/shared/default.pal", out)
@@ -65,15 +71,25 @@ function colors.build_color_palette()
 
   for i,c in ipairs(COLORS.DARK) do
     -- darken each of our custom colors by i steps
-    for j = BLUE_START, BLUE_END do
-      colortable:set(j, c, max(j - i, BLUE_START))
+    for c2 = BLUE_START, BLUE_END do
+      colortable:set(c2, c, max(c2 - i, BLUE_START))
     end
-    for j = WHITE_START, WHITE_END do
-      colortable:set(j, c, max(j - i, WHITE_START))
+    for c2 = WHITE_START, WHITE_END do
+      colortable:set(c2, c, max(c2 - i, WHITE_START))
+    end
+
+    for _,c2 in ipairs(COLORS.DARK) do
+      -- keep the lighter when covering the two
+      colortable:set(c2, c, min(c, c2))
+    end
+
+    for i = 0, 32 do
+      -- transparent with respect to base palette
+      colortable:set(i, c, i)
     end
   end
 
-  poke(0x8000, colortable)
+  colortable:poke(0x8000)
   -- set_spr(1, colortable)
   set_clipboard(pod(colortable, 0x0, {pod_type="image"}))
 

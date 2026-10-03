@@ -11,9 +11,9 @@ require "src.util.log"
 ---@alias vec2 userdata
 
 local dtm = require "src.util.draw_target_manager"
+local colors = require "src.colors"
 local lighting = require "src.lighting"
 local world = require "src.world"
-local colors = require "src.colors"
 
 CONFIG = {
   LOG_LEVEL = "DEBUG",  
@@ -62,7 +62,7 @@ function _draw()
   lighting.clear()
   lighting.light_disks(CENTER_X, CENTER_Y, 20, 10 / depth)
   -- lighting.light_rows(100, 30)
-  -- lighting.draw_lighting()
+  lighting.draw_lighting()
 
   dtm.pop()
 
@@ -76,6 +76,13 @@ function _draw()
 
   cls()
   spr(screen_buffer, 0, 0)
+
+  -- for i = 1, 9 do
+  --   circfill(100 + 20 * i, 20 * i, 10, COLORS.DARK[i])
+  -- end
+  
+  color(7)
+  print(stat(1))
 end
  
 function _update()
