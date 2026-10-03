@@ -190,10 +190,13 @@ end
 function World:do_player_move(p, dx, dy)
   if dx ~= 0 or dy ~= 0 then
     local check_feet = false -- makes turning against walls nicer
-    local new_dir = atan2(dx, dy)
 
-    -- round to .25
-    new_dir = flr(4 * new_dir + 0.5) % 4
+    local new_dir
+    if abs(dx) >= abs(dy) then
+      if dx >= 0 then new_dir = 0 else new_dir = 2 end
+    else
+      if dy >= 0 then new_dir = 3 else new_dir = 1 end
+    end
 
     -- don't turn around hard
     if abs(p.dir - new_dir) == 2 then
