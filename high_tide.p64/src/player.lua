@@ -121,7 +121,7 @@ function Player:try_move(d_pos, check_feet)
     if fget(tile, 0) then
       is_solid = true
     end
-    if not fget(tile, 1) then
+    if not fget(tile, 1) and not fget(tile, 0) then
       all_air = false
     end
   end
@@ -135,7 +135,7 @@ function Player:try_move(d_pos, check_feet)
         is_solid = true
       end
     end
-    if not fget(tile, 1) then
+    if not fget(tile, 1) and not fget(tile, 0) then
       all_air = false
     end
   end
@@ -157,7 +157,7 @@ function Player:try_move(d_pos, check_feet)
     if fget(tile, 1) then
       is_breathing = true
     end
-    if not fget(tile, 1) then
+    if not fget(tile, 1) and not fget(tile, 0) then
       all_air = false
     end
   end
