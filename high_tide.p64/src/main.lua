@@ -13,6 +13,7 @@ require "src.util.log"
 local dtm = require "src.util.draw_target_manager"
 local lighting = require "src.lighting"
 local world = require "src.world"
+local colors = require "src.colors"
 
 CONFIG = {
   LOG_LEVEL = "DEBUG",  
@@ -43,10 +44,9 @@ end
 
 
 function _init()
+  colors.build_color_palette()
+  
   game.world = world.new("map/0.map")
-
-  apply_color_table(8)
-  palt(0, true)
 
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
 end
@@ -62,7 +62,7 @@ function _draw()
   lighting.clear()
   lighting.light_disks(CENTER_X, CENTER_Y, 20, 10 / depth)
   -- lighting.light_rows(100, 30)
-  lighting.draw_lighting()
+  -- lighting.draw_lighting()
 
   dtm.pop()
 

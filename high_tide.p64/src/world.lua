@@ -86,7 +86,7 @@ function World:update()
 end
 
 function World:draw()
-  cls(1)
+  cls(COLORS.BG)
 
   local p = self.player
 
