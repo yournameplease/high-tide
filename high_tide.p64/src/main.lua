@@ -13,7 +13,7 @@ require "src.util.log"
 local dtm = require "src.util.draw_target_manager"
 local colors = require "src.colors"
 local lighting = require "src.lighting"
-local world = require "src.world"
+local world_mod = require "src.world"
 
 local FLASHLIGHT_STEP_FACTOR = 5
 -- in pixels
@@ -37,6 +37,12 @@ local global_t = 0
 local screen_buffer
 local game = {}
 
+-- globals (eww) for convenience
+world = {}
+p = {}
+tiles = {}
+
+
 function apply_color_table(color_table_sprite, idx)
   idx = idx or 0
 	local sprite=get_spr(color_table_sprite)
@@ -53,13 +59,13 @@ end
 function _init()
   colors.build_color_palette()
   
-  game.world = world.new("map/0.map")
+  game.world = world_mod.new("map/0.map")
 
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
 end
 
 function _draw()
-  local y = game.world.player.pos.y
+  local y = p.pos.y
   
   dtm.push_target(screen_buffer)
 
