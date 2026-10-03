@@ -1,7 +1,9 @@
 local PLAYER_HALF_H = 0.7
 local PLAYER_HALF_W = 0.2
-local PLAYER_FRIC = 0.96
-local PLAYER_STROKE_VEL = 0.2
+local PLAYER_FRIC = 0.95
+-- local PLAYER_STROKE_VEL = 0.2
+-- local PLAYER_STROKE_TIME = 25
+local PLAYER_STROKE_VEL = 0.3
 local PLAYER_STROKE_TIME = 45
 
 local PLAYER_FEET_POINTS = {
@@ -57,18 +59,20 @@ function Player:update()
       if (btn(3))then any_move = true dy = dy + 1 end
 
       local new_dir
-      if abs(dx) >= abs(dy) then
-        if dx >= 0 then new_dir = 0 else new_dir = 2 end
-      else
+      if abs(dy) > abs(dx) then
         if dy >= 0 then new_dir = 3 else new_dir = 1 end
+      elseif abs(dx) > 0 then
+        if dx >= 0 then new_dir = 0 else new_dir = 2 end
       end
 
-      -- don't turn around hard
-      if abs(self.dir - new_dir) == 2 then
-        new_dir = self.dir
-      end
+      if new_dir then
+        -- don't turn around hard
+        if abs(self.dir - new_dir) == 2 then
+          new_dir = self.dir
+        end
 
-      self.dir = new_dir
+        self.dir = new_dir
+      end
 
       if any_move then
         self.stroke_t = PLAYER_STROKE_TIME
