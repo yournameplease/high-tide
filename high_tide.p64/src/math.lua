@@ -27,6 +27,14 @@ function norm(v)
   return math.sqrt(v.x * v.x + v.y * v.y)
 end
 
+function inv_norm_squared(v)
+  local n_s = norm_squared(v)
+  if n_s < 0.0001 then
+    return 0
+  end
+  return 1/n_s
+end
+
 function normalize(v)
   local norm_sq = norm_squared(v)
   if norm_sq < 0.0001 then
@@ -37,4 +45,12 @@ end
 
 function dot(v, u)
   return v.x * u.x + v.y * u.y
+end
+
+function dir_to_vec(d)
+  if d == 0 then return vec(1, 0)
+  elseif d == 1 then return vec(0, -1)
+  elseif d == 2 then return vec(-1, 0)
+  elseif d == 3 then return vec(0, 1)
+  else error() end
 end

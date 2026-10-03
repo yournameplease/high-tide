@@ -1,5 +1,14 @@
 local PLAYER_HALF_H = 0.7
 local PLAYER_HALF_W = 0.2
+local PLAYER_FRIC = 0.96
+local PLAYER_STROKE_VEL = 0.2
+local PLAYER_STROKE_TIME = 45
+
+local WATER_X_AMP = 0.0004
+local WATER_Y_AMP = 0.0004
+local WATER_X_FREQ = 127
+local WATER_Y_FREQ = 63
+local WATER_X_PHASE = 150
 
 -- todo diagonal bits to push against wall
 local PLAYER_FEET_POINTS = {
@@ -31,7 +40,9 @@ Player.__index = Player
 local function player_new(x, y, dir)
   local self = setmetatable({
     pos = vec(x, y),
+    vel = vec(0, 0),
     t = 0,
+    stroke_t = 0,
     dir = 0,
   }, Player)
 
@@ -43,6 +54,8 @@ end
 ---@field bg userdata
 ---@field tiles userdata
 ---@field fg userdata
+---@field t integer
+---@field player Player
 
 local World = {}
 World.__index = World
@@ -60,28 +73,62 @@ function world.new(map_path)
 
   self.player = player_new(8, 4, 0)
 
+  self.t = 0
+
   return self
 end
 
 function World:update()
+  self.t = self.t + 1
+  
+  local water_vel = vec(
+    WATER_X_AMP * sin(self.t / WATER_X_FREQ + WATER_X_PHASE),
+    WATER_Y_AMP * sin(self.t / WATER_Y_FREQ)
+  )
+  
   do -- player movement
     local p = self.player
     local any_move = false
 
-    local dx = 0
-    local dy = 0
+    if p.stroke_t <= 0 then
+      local dx = 0
+      local dy = 0
+      if (btn(0))then any_move = true dx = dx - 1 end
+      if (btn(1))then any_move = true dx = dx + 1 end
+      if (btn(2))then any_move = true dy = dy - 1 end
+      if (btn(3))then any_move = true dy = dy + 1 end
 
-    if (btn(0))then any_move = true dx = dx - 1 end
-    if (btn(1))then any_move = true dx = dx + 1 end
-    if (btn(2))then any_move = true dy = dy - 1 end
-    if (btn(3))then any_move = true dy = dy + 1 end
+      local new_dir
+      if abs(dx) >= abs(dy) then
+        if dx >= 0 then new_dir = 0 else new_dir = 2 end
+      else
+        if dy >= 0 then new_dir = 3 else new_dir = 1 end
+      end
 
-    self:do_player_move(p, dx / 5, dy / 5)
-    if any_move then
+      -- don't turn around hard
+      if abs(p.dir - new_dir) == 2 then
+        new_dir = p.dir
+      end
+
+      p.dir = new_dir
+
+      if any_move then
+        p.stroke_t = PLAYER_STROKE_TIME
+        p.vel = p.vel + PLAYER_STROKE_VEL * normalize(vec(dx, dy))
+      end
+    else
+      p.stroke_t = p.stroke_t - 1
+    end
+
+    self:do_player_move(p, p.vel.x, p.vel.y)
+    if norm_squared(p.vel) > 0.0001 then
        p.t =  p.t + 1
     else
        p.t =  p.t // 2
     end
+
+    p.vel = p.vel + water_vel
+    p.vel = p.vel * PLAYER_FRIC
   end
 end
 
@@ -191,23 +238,17 @@ function World:do_player_move(p, dx, dy)
   if dx ~= 0 or dy ~= 0 then
     local check_feet = false -- makes turning against walls nicer
 
-    local new_dir
-    if abs(dx) >= abs(dy) then
-      if dx >= 0 then new_dir = 0 else new_dir = 2 end
-    else
-      if dy >= 0 then new_dir = 3 else new_dir = 1 end
-    end
-
+    local vel = vec(dx, dy)
+    local dir_vec = dir_to_vec(p.dir)
     -- don't turn around hard
-    if abs(p.dir - new_dir) == 2 then
-      new_dir = p.dir
+    if dot(vel, dir_vec) < 0 then
       dx = dx * 0.5
       dy = dy * 0.5
       check_feet = true
     end
 
-    self:try_move_player(p, dx, 0, new_dir, check_feet)
-    self:try_move_player(p, 0, dy, new_dir, check_feet)
+    self:try_move_player(p, dx, 0, p.dir, check_feet)
+    self:try_move_player(p, 0, dy, p.dir, check_feet)
   end
 
   local push_dir
