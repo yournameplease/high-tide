@@ -94,7 +94,7 @@ function _draw()
   -- for i = 1, 9 do
   --   circfill(100 + 20 * i, 20 * i, 10, COLORS.DARK[i])
   -- end
-  
+
   color(7)
   print(stat(1))
 end
