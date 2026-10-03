@@ -1,5 +1,8 @@
 local BASE_COLOR = 32
 
+--- two palettes by https://lospec.com/joe70098
+
+--- https://lospec.com/palette-list/azure-abyss
 local AZURE_ABYSS = {
   0x10022a,
   0x0e033e,
@@ -12,6 +15,7 @@ local AZURE_ABYSS = {
   0x69f0c7,
 }
 
+--- https://lospec.com/palette-list/astria-solseturs
 local ASTRIDA_SOLSETURS = {
   0x05051b,
   0x1b0a27,
