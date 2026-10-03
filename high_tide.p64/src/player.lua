@@ -76,7 +76,13 @@ function Player:update()
 
       if any_move then
         self.stroke_t = PLAYER_STROKE_TIME
-        self.vel = self.vel + PLAYER_STROKE_VEL * normalize(vec(dx, dy))
+
+        local slow_factor = 1.0
+        if btn(4) or btn(5) then
+          slow_factor = 0.5
+        end
+        
+        self.vel = self.vel + slow_factor * PLAYER_STROKE_VEL * normalize(vec(dx, dy))
       end
     else
       self.stroke_t = self.stroke_t - 1
