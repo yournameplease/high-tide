@@ -3,8 +3,10 @@ local PLAYER_HALF_W = 0.2
 local PLAYER_FRIC = 0.95
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
-local PLAYER_STROKE_VEL = 0.3
-local PLAYER_STROKE_TIME = 45
+local PLAYER_STROKE_VEL = 0.4
+local PLAYER_SHORT_STROKE_VEL = 0.1
+local PLAYER_STROKE_TIME = 60
+local PLAYER_SHORT_STROKE_TIME = 15
 
 local PLAYER_FEET_POINTS = {
   vec(-PLAYER_HALF_H, -PLAYER_HALF_W), 
@@ -75,14 +77,17 @@ function Player:update()
       end
 
       if any_move then
-        self.stroke_t = PLAYER_STROKE_TIME
 
-        local slow_factor = 1.0
+        local stroke_vel
         if btn(4) or btn(5) then
-          slow_factor = 0.5
+          stroke_vel = PLAYER_SHORT_STROKE_VEL
+          self.stroke_t = PLAYER_SHORT_STROKE_TIME
+        else
+          stroke_vel = PLAYER_STROKE_VEL
+          self.stroke_t = PLAYER_STROKE_TIME
         end
         
-        self.vel = self.vel + slow_factor * PLAYER_STROKE_VEL * normalize(vec(dx, dy))
+        self.vel = self.vel + stroke_vel * normalize(vec(dx, dy))
       end
     else
       self.stroke_t = self.stroke_t - 1
