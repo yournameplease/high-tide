@@ -127,8 +127,7 @@ function World:update()
        p.t =  p.t // 2
     end
 
-    -- less sway if already moving fast
-    p.vel = p.vel + water_vel-- * (1 + inv_norm_squared(p.vel))
+    p.vel = p.vel + water_vel
     p.vel = p.vel * PLAYER_FRIC
   end
 end
