@@ -52,14 +52,17 @@ function _init()
 end
 
 function _draw()
+  local y = game.world.player.pos.y
+  
   dtm.push_target(screen_buffer)
 
   game.world:draw()
   
   camera()
-  local depth = math.log(game.world.player.pos.y + 10) / 20
+  local depth = math.log(y + 10) / 20
 
   lighting.clear()
+  lighting.light_rows(-y * TILE_H, TILE_H * 25)
   lighting.light_disks(CENTER_X, CENTER_Y, 20, 10 / depth)
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()

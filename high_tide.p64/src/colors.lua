@@ -41,11 +41,9 @@ COLORS = {
   BG = 36,
 }
 
-for i = 1, 9 do
+for i = 1, 10 do
   COLORS.DARK[i] = COLORTABLE_BASE + i
 end
-COLORS.DARK[0] = COLORTABLE_BASE + 0 -- darken by 0 == transparent
-palt(COLORS.DARK[0], true)
 
 assert(COLORTABLE_BASE + #COLORS.DARK < 64, "too many colors!  move them around")
 
@@ -70,12 +68,13 @@ function colors.build_color_palette()
   local colortable = userdata("u8", 64, 64):peek(0x8000)
 
   for i,c in ipairs(COLORS.DARK) do
+    local dark = i - 1
     -- darken each of our custom colors by i steps
     for c2 = BLUE_START, BLUE_END do
-      colortable:set(c2, c, max(c2 - i, BLUE_START))
+      colortable:set(c2, c, max(c2 - dark, BLUE_START))
     end
     for c2 = WHITE_START, WHITE_END do
-      colortable:set(c2, c, max(c2 - i, WHITE_START))
+      colortable:set(c2, c, max(c2 - dark, WHITE_START))
     end
 
     for _,c2 in ipairs(COLORS.DARK) do

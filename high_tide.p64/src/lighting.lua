@@ -2,7 +2,7 @@ local dtm = require "src.util.draw_target_manager"
 
 -- this is still a bit laggy.  consider perf optimizations if frames drop
 
-local DARK_BASE = COLORS.DARK[0]
+local DARK_BASE = COLORS.DARK[1]
 local DARK_N = 4
 local DARK_MAX = DARK_BASE + DARK_N
 
@@ -16,16 +16,15 @@ end
 
 function lighting.light_rows(y, h)
   dtm.push_target(light_buffer)
-  -- doesn't work
-  for i = DARK_N, 1, -1 do 
-    rrectfill(0, y + h * i, SCREEN_W, -SCREEN_H, DARK_N - i + 1)
+  for i = DARK_N, 0, -1 do 
+    rrectfill(0, y + h * i, SCREEN_W, h,0, DARK_BASE + i)
   end
   dtm.pop()
 end
 
 function lighting.light_disks(x, y, r, dr)
   dtm.push_target(light_buffer)
-  for i = DARK_N, 1, -1 do 
+  for i = DARK_N, 0, -1 do 
     circfill(x, y, r + dr * i, DARK_BASE + i)
   end
   dtm.pop()
