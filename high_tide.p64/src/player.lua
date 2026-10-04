@@ -1,5 +1,5 @@
-local PLAYER_HALF_H = 0.7
-local PLAYER_HALF_W = 0.2
+local PLAYER_HALF_H = 0.6
+local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
@@ -7,7 +7,7 @@ local PLAYER_FRIC = 0.95
 -- TODO: consider bringing the super big strokes.  maybe slightly stronger than these but from an upgrade?
 -- local PLAYER_STROKE_VEL = 0.5
 -- local PLAYER_STROKE_TIME = 45
-local PLAYER_SHORT_STROKE_VEL = 0.07
+local PLAYER_SHORT_STROKE_VEL = 0.05
 local PLAYER_SHORT_STROKE_TIME = 5
 
 -- local PLAYER_STROKE_VEL = PLAYER_SHORT_STROKE_VEL
@@ -48,6 +48,7 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field air integer ticks of air
 ---@field in_air boolean
 ---@field is_flashlight boolean
+---@field heading_forward boolean true for forward, false for backward.  used for turning
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
 Player.__index = Player
@@ -65,6 +66,7 @@ function player.new(x, y, dir)
     is_flashlight = false,
     battery = PLAYER_BASE_BATTERY,
     held_stroke = false,
+    heading_forward = true,
   }, Player)
 
   return self
@@ -103,29 +105,39 @@ function Player:update()
         local target_angle = atan2(dx, dy) % 1
         target_angle = flr(8 * (target_angle + 1/16)) / 8
 
-        
         local diff = target_angle - self.dir / 4
-        local diff_min = min(abs(diff), abs(1 - diff))
+        local diff_min = min(abs(diff), abs(1 - abs(diff)))
 
         -- no turns when stick is 45 degrees from current
-        if diff_min > 0.125 then
+        if diff_min > 0.125 and diff_min < 0.5 then
+          local dir_step
           if diff > 0 and diff < 0.5 or diff < -0.5 then
-            new_dir = (self.dir + 1) % 4
+            dir_step = 1
           else
-            new_dir = (self.dir - 1) % 4
+            dir_step = -1
           end
+
+          if not self.heading_forward then
+            dir_step = -dir_step
+          end
+
+          new_dir = (self.dir + dir_step) % 4
         end
 
-        log.debug(self.dir, target_angle, diff, diff_min, new_dir)
-
+        local did_turn
         if new_dir then
-          -- don't turn around hard
-          if abs(self.dir - new_dir) == 2 then
-            new_dir = self.dir
-          end
-
-          self:try_turn(new_dir, false)
+          did_turn = self:try_turn(new_dir)
         end
+
+        local new_diff = target_angle - self.dir / 4
+        local new_diff_min = min(abs(new_diff), abs(1 - abs(new_diff)))
+        if new_diff_min < 0.25 or did_turn then
+          self.heading_forward = true
+        elseif new_diff_min > 0.25 then
+          self.heading_forward = false
+        end
+
+        log.debug(self.dir, target_angle, self.heading_forward)
       end
 
       if any_move then
@@ -166,7 +178,7 @@ function Player:update()
     end
 end
 
-function Player:test_collision(pos, dir, check_feet)
+function Player:test_collision(pos, dir)
 
   local is_solid = false
   local is_push = false
@@ -191,9 +203,7 @@ function Player:test_collision(pos, dir, check_feet)
     local tile = tiles:get(tile_pos.x, tile_pos.y)
 
     if fget(tile, 0) then
-      if check_feet then
-        is_solid = true
-      end
+      is_solid = true
     end
     if not fget(tile, 1) and not fget(tile, 0) then
       all_air = false
@@ -227,18 +237,22 @@ function Player:test_collision(pos, dir, check_feet)
   return is_solid or all_air
 end
 
-function Player:try_move(d_pos, check_feet)
+function Player:try_move(d_pos)
   local new_pos = self.pos + d_pos
   
-  if not self:test_collision(new_pos, self.dir, check_feet) then
+  if not self:test_collision(new_pos, self.dir) then
     self.pos = new_pos
   end
 end
 
-function Player:try_turn(new_dir, check_feet)
-  if not self:test_collision(self.pos, new_dir, check_feet) then
+---@return boolean success
+function Player:try_turn(new_dir)
+  if not self:test_collision(self.pos, new_dir) then
     self.dir = new_dir
+
+    return true
   end
+  return false
 end
 
 
@@ -247,18 +261,16 @@ function Player:move()
     local dx = self.vel.x
     local dy = self.vel.y
     
-    local check_feet = false -- makes turning against walls nicer
 
     local dir_vec = dir_to_vec(self.dir)
     -- don't turn around hard
     if dot(self.vel, dir_vec) < 0 then
       dx = dx * 0.5
       dy = dy * 0.5
-      check_feet = true
     end
 
-    self:try_move(vec(dx, 0), check_feet)
-    self:try_move(vec(0, dy), check_feet)
+    self:try_move(vec(dx, 0))
+    self:try_move(vec(0, dy))
   end
 
   local push_dir
@@ -293,7 +305,7 @@ function Player:draw()
   if self.dir == 2 then hflip = true end
   if self.dir == 3 then vflip = true end
   local world_pos = self.pos * TILE_FACTOR
-  spr(0x30000 | index, world_pos.x,  world_pos.y + ( self.t//20%2),  hflip, vflip)
+  spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
 
   do -- debug points
     for i, o in ipairs(PLAYER_ALL_POINTS) do
