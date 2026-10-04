@@ -1,5 +1,5 @@
-local PLAYER_HALF_H = 0.7
-local PLAYER_HALF_W = 0.2
+local PLAYER_HALF_H = 0.6
+local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
@@ -166,7 +166,7 @@ function Player:update()
     end
 end
 
-function Player:test_collision(pos, dir, check_feet)
+function Player:test_collision(pos, dir)
 
   local is_solid = false
   local is_push = false
@@ -191,9 +191,7 @@ function Player:test_collision(pos, dir, check_feet)
     local tile = tiles:get(tile_pos.x, tile_pos.y)
 
     if fget(tile, 0) then
-      if check_feet then
-        is_solid = true
-      end
+      is_solid = true
     end
     if not fget(tile, 1) and not fget(tile, 0) then
       all_air = false
@@ -227,16 +225,16 @@ function Player:test_collision(pos, dir, check_feet)
   return is_solid or all_air
 end
 
-function Player:try_move(d_pos, check_feet)
+function Player:try_move(d_pos)
   local new_pos = self.pos + d_pos
   
-  if not self:test_collision(new_pos, self.dir, check_feet) then
+  if not self:test_collision(new_pos, self.dir) then
     self.pos = new_pos
   end
 end
 
-function Player:try_turn(new_dir, check_feet)
-  if not self:test_collision(self.pos, new_dir, check_feet) then
+function Player:try_turn(new_dir)
+  if not self:test_collision(self.pos, new_dir) then
     self.dir = new_dir
   end
 end
@@ -247,18 +245,16 @@ function Player:move()
     local dx = self.vel.x
     local dy = self.vel.y
     
-    local check_feet = false -- makes turning against walls nicer
 
     local dir_vec = dir_to_vec(self.dir)
     -- don't turn around hard
     if dot(self.vel, dir_vec) < 0 then
       dx = dx * 0.5
       dy = dy * 0.5
-      check_feet = true
     end
 
-    self:try_move(vec(dx, 0), check_feet)
-    self:try_move(vec(0, dy), check_feet)
+    self:try_move(vec(dx, 0))
+    self:try_move(vec(0, dy))
   end
 
   local push_dir

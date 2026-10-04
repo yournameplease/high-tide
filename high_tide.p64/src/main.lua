@@ -68,7 +68,7 @@ end
 function _init()
   colors.build_color_palette()
   
-  game.world = world_mod.new("map/0.map")
+  game.world = world_mod.new("map/playground.map")
 
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
 end
