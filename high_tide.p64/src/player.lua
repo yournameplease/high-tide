@@ -161,11 +161,7 @@ function Player:update()
     end
 
     self:move(p, self.vel.x, self.vel.y)
-    if norm_squared(self.vel) > 0.0001 then
-       self.t =  self.t + 1
-    else
-       self.t =  self.t // 2
-    end
+    self.t =  self.t + 1
 
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
@@ -302,7 +298,16 @@ function Player:draw()
 
   local hflip = false
   local vflip = false
-  local index = 40 + (self.t //20 ) % 4
+  local index = 40
+
+  if norm_squared(self.vel) > 0.04 then
+    index = index + 1
+  else
+    if self.stroke_held  then
+      index = index + 2 + (self.t // 16) % 2
+    end
+  end
+
   if self.dir == 1 or self.dir == 3 then index = index + 4 end
   if self.dir == 2 then hflip = true end
   if self.dir == 3 then vflip = true end
