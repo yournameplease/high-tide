@@ -86,7 +86,7 @@ function Player:update()
           new_dir = self.dir
         end
 
-        self.dir = new_dir
+        self:try_turn(new_dir, false)
       end
 
       if any_move then
@@ -191,6 +191,12 @@ function Player:try_move(d_pos, check_feet)
   
   if not self:test_collision(new_pos, self.dir, check_feet) then
     self.pos = new_pos
+  end
+end
+
+function Player:try_turn(new_dir, check_feet)
+  if not self:test_collision(self.pos, new_dir, check_feet) then
+    self.dir = new_dir
   end
 end
 
