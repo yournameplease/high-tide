@@ -1,13 +1,15 @@
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
+
+local PLAYER_SCALE = 1
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
 
 -- TODO: consider bringing the super big strokes.  maybe slightly stronger than these but from an upgrade?
 -- local PLAYER_STROKE_VEL = 0.5
 -- local PLAYER_STROKE_TIME = 45
-local PLAYER_SHORT_STROKE_VEL = 0.05
+local PLAYER_SHORT_STROKE_VEL = 0.04
 local PLAYER_SHORT_STROKE_TIME = 5
 
 -- local PLAYER_STROKE_VEL = PLAYER_SHORT_STROKE_VEL
@@ -117,7 +119,7 @@ function Player:update()
             dir_step = -1
           end
 
-          if not self.heading_forward then
+          if not self.heading_forward and not self:can_spin() then
             dir_step = -dir_step
           end
 
@@ -137,7 +139,6 @@ function Player:update()
           self.heading_forward = false
         end
 
-        log.debug(self.dir, target_angle, self.heading_forward)
       end
 
       if any_move then
@@ -158,14 +159,10 @@ function Player:update()
       self.stroke_t = self.stroke_t - 1
     end
 
-    self:move(p, self.vel.x, self.vel.y)
-    if norm_squared(self.vel) > 0.0001 then
-       self.t =  self.t + 1
-    else
-       self.t =  self.t // 2
-    end
+    self:move()
+    self.t =  self.t + 1
 
-    -- self.vel = self.vel + world.water_vel
+    self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
   
 
@@ -178,7 +175,7 @@ function Player:update()
     end
 end
 
-function Player:test_collision(pos, dir)
+function Player:is_collision(pos, dir)
 
   local is_solid = false
   local is_push = false
@@ -240,19 +237,28 @@ end
 function Player:try_move(d_pos)
   local new_pos = self.pos + d_pos
   
-  if not self:test_collision(new_pos, self.dir) then
+  if not self:is_collision(new_pos, self.dir) then
     self.pos = new_pos
   end
 end
 
 ---@return boolean success
 function Player:try_turn(new_dir)
-  if not self:test_collision(self.pos, new_dir) then
+  if not self:is_collision(self.pos, new_dir) then
     self.dir = new_dir
 
     return true
   end
   return false
+end
+
+function Player:can_spin()
+  for i = 0, 3 do
+    if self:is_collision(self.pos, i) then
+      return false
+    end
+  end
+  return true
 end
 
 
@@ -300,19 +306,29 @@ function Player:draw()
 
   local hflip = false
   local vflip = false
-  local index = 16 + (self.t //20 ) % 4
+  local index = 40
+
+  if norm_squared(self.vel) > 0.04 then
+    index = index + 1
+  else
+    if self.stroke_held  then
+      index = index + 2 + (self.t // 16) % 2
+    end
+  end
+
   if self.dir == 1 or self.dir == 3 then index = index + 4 end
   if self.dir == 2 then hflip = true end
   if self.dir == 3 then vflip = true end
   local world_pos = self.pos * TILE_FACTOR
   spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
+  -- sspr(0x30000 | index, 0, 0, 16, 16, world_pos.x,  world_pos.y, 16 * PLAYER_SCALE, 16 * PLAYER_SCALE,  hflip, vflip)
 
   do -- debug points
-    for i, o in ipairs(PLAYER_ALL_POINTS) do
-      local step = vec_rot(o, self.dir/4)
-      local tile_pos = world_pos + step * TILE_FACTOR
-      pset(tile_pos.x, tile_pos.y, 8)
-    end
+    -- for i, o in ipairs(PLAYER_ALL_POINTS) do
+    --   local step = vec_rot(o, self.dir/4)
+    --   local tile_pos = world_pos + step * TILE_FACTOR
+    --   pset(tile_pos.x, tile_pos.y, 8)
+    -- end
   end
 end
 

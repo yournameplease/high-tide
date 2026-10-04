@@ -210,6 +210,7 @@ local source_lines = {}
 ---- main events ---------------------------------
 
 local function rebuild()
+    vid(0)
     -- rebuild stack frame info
     stack_frames = {}
     variables = {}

@@ -1,9 +1,15 @@
-SCREEN_W = 480
-SCREEN_H = 270
+-- VID = 3
+-- SCREEN_W = 480 / 2
+-- SCREEN_H = 270 / 2
+
+VID = 4
+SCREEN_W = 480 / 3
+SCREEN_H = 270 / 3
+
 CENTER_X = SCREEN_W / 2
 CENTER_Y = SCREEN_H / 2
-TILE_W = 16
-TILE_H = 16
+TILE_W = 16 / 2
+TILE_H = 16 / 2
 TILE_FACTOR = vec(TILE_W, TILE_H)
 
 require "src.math"
@@ -14,6 +20,7 @@ local dtm = require "src.util.draw_target_manager"
 local colors = require "src.colors"
 local lighting = require "src.lighting"
 local world_mod = require "src.world"
+local player_mod = require "src.player"
 
 local PLAYER_LIGHT_STEP_FACTOR = 5
 -- in pixels
@@ -44,7 +51,6 @@ local COLOR_TABLE_ADDRS = {
 
 local global_t = 0
 local screen_buffer
-local game = {}
 
 -- globals (eww) for convenience
 world = {}
@@ -68,9 +74,12 @@ end
 function _init()
   colors.build_color_palette()
   
-  game.world = world_mod.new("map/playground.map")
+  world = world_mod.new("map/shallows.map")
+  p = player_mod.new(10, 4, 0)
 
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
+
+  vid(VID)
 end
 
 function _draw()
@@ -78,11 +87,9 @@ function _draw()
   
   dtm.push_target(screen_buffer)
 
-  game.world:draw()
+  world:draw()
   
   camera()
-  local depth = math.log(y + 10) / 20
-
   lighting.clear()
   lighting.light_rows(-y * TILE_H, TILE_H * 25)
 
@@ -120,12 +127,12 @@ function _draw()
   dtm.pop()
 
   -- "water shader"
-  local S = 20
-  for i = 1, S do
-    local y = (i / S + math.sin(global_t / 500) / S) * SCREEN_H 
-    local o = (2 + 1 * math.sin(global_t / 100))
-    screen_buffer:blit(screen_buffer, 5, y, 5 + o, y, SCREEN_W - 10, 2)
-  end
+  -- local S = 20
+  -- for i = 1, S do
+  --   local y = (i / S + math.sin(global_t / 500) / S) * SCREEN_H 
+  --   local o = (2 + 1 * math.sin(global_t / 100))
+  --   screen_buffer:blit(screen_buffer, 5, y, 5 + o, y, SCREEN_W - 10, 2)
+  -- end
 
   cls()
   spr(screen_buffer, 0, 0)
@@ -142,5 +149,6 @@ end
  
 function _update()
   global_t = global_t + 1
-  game.world:update()
+  world:update()
+  p:update()
 end
