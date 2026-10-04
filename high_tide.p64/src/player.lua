@@ -125,17 +125,16 @@ function Player:update()
     end
 end
 
-function Player:try_move(d_pos, check_feet)
-  local new_pos = self.pos + d_pos
-  
+function Player:test_collision(pos, dir, check_feet)
+
   local is_solid = false
   local is_push = false
   local all_air = true
   local push_dir
   local is_breathing = false
   for i, o in ipairs(PLAYER_BODY_POINTS) do
-    local step = vec_rot(o, self.dir/4)
-    local tile_pos = new_pos + step
+    local step = vec_rot(o, dir/4)
+    local tile_pos = pos + step
     local tile = tiles:get(tile_pos.x, tile_pos.y)
 
     if fget(tile, 0) then
@@ -146,8 +145,8 @@ function Player:try_move(d_pos, check_feet)
     end
   end
   for i, o in ipairs(PLAYER_FEET_POINTS) do
-    local step = vec_rot(o, self.dir/4)
-    local tile_pos = new_pos + step
+    local step = vec_rot(o, dir/4)
+    local tile_pos = pos + step
     local tile = tiles:get(tile_pos.x, tile_pos.y)
 
     if fget(tile, 0) then
@@ -160,8 +159,8 @@ function Player:try_move(d_pos, check_feet)
     end
   end
   for i, o in ipairs(PLAYER_HEAD_POINTS) do
-    local step = vec_rot(o, self.dir/4)
-    local tile_pos = new_pos + step
+    local step = vec_rot(o, dir/4)
+    local tile_pos = pos + step
     local tile = tiles:get(tile_pos.x, tile_pos.y)
     if fget(tile, 0) then
       if i == 1 or i == 3 then
@@ -182,13 +181,17 @@ function Player:try_move(d_pos, check_feet)
     end
   end
 
-
+  -- side effect!!!
   self.in_air = is_breathing
-  if is_solid or all_air then
-    return
-  end
+  return is_solid or all_air
+end
 
-  self.pos = new_pos
+function Player:try_move(d_pos, check_feet)
+  local new_pos = self.pos + d_pos
+  
+  if not self:test_collision(new_pos, self.dir, check_feet) then
+    self.pos = new_pos
+  end
 end
 
 
