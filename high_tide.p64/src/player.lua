@@ -308,11 +308,11 @@ function Player:draw()
   spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
 
   do -- debug points
-    for i, o in ipairs(PLAYER_ALL_POINTS) do
-      local step = vec_rot(o, self.dir/4)
-      local tile_pos = world_pos + step * TILE_FACTOR
-      pset(tile_pos.x, tile_pos.y, 8)
-    end
+    -- for i, o in ipairs(PLAYER_ALL_POINTS) do
+    --   local step = vec_rot(o, self.dir/4)
+    --   local tile_pos = world_pos + step * TILE_FACTOR
+    --   pset(tile_pos.x, tile_pos.y, 8)
+    -- end
   end
 end
 

@@ -14,6 +14,7 @@ local dtm = require "src.util.draw_target_manager"
 local colors = require "src.colors"
 local lighting = require "src.lighting"
 local world_mod = require "src.world"
+local player_mod = require "src.player"
 
 local PLAYER_LIGHT_STEP_FACTOR = 5
 -- in pixels
@@ -68,7 +69,8 @@ end
 function _init()
   colors.build_color_palette()
   
-  game.world = world_mod.new("map/playground.map")
+  game.world = world_mod.new("map/shallows.map")
+  p = player_mod.new(10, 4, 0)
 
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
 end
@@ -81,8 +83,6 @@ function _draw()
   game.world:draw()
   
   camera()
-  local depth = math.log(y + 10) / 20
-
   lighting.clear()
   lighting.light_rows(-y * TILE_H, TILE_H * 25)
 
@@ -143,4 +143,5 @@ end
 function _update()
   global_t = global_t + 1
   game.world:update()
+  p:update()
 end

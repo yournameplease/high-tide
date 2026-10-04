@@ -1,4 +1,3 @@
-local player_mod = require "src.player"
 
 local WATER_X_AMP = 0.0004
 local WATER_Y_AMP = 0.0004
@@ -23,11 +22,11 @@ function world.new(map_path)
   local self = setmetatable({}, World)
 
   local m = fetch(map_path)
-  self.bg = m[1].bmp
-  self.tiles = m[2].bmp
-  self.fg = m[3].bmp
+  -- self.bg = m[1].bmp
+  -- self.tiles = m[2].bmp
+  -- self.fg = m[3].bmp
+  self.tiles = m[1].bmp
 
-  p = player_mod.new(8, 4, 0)
   tiles = self.tiles
 
   self.t = 0
@@ -41,24 +40,35 @@ function World:update()
     WATER_X_AMP * sin(self.t / WATER_X_FREQ + WATER_X_PHASE),
     WATER_Y_AMP * sin(self.t / WATER_Y_FREQ)
   )
-
-  p:update()
 end
 
 function World:draw()
-  cls(COLORS.BG)
-
   local p_pos = p.pos * TILE_FACTOR
   local cam_x = p_pos.x - CENTER_X
   local cam_y = p_pos.y - CENTER_Y
+
+  camera(0, cam_y)
+
+  if cam_y < SCREEN_H then
+    cls()
+    rrectfill(0, -SCREEN_H, SCREEN_W, SCREEN_H, 0, COLORS.BG_AIR)
+    rrectfill(0, 0, SCREEN_W, 2*SCREEN_H, 0, COLORS.BG)
+  else
+    cls(COLORS.BG)
+  end
+
   camera(cam_x, cam_y)
 
-  map(self.bg, 0, 0, 0 - p.pos.x / 10)
+  if self.bg then
+    map(self.bg, 0, 0, 0 - p.pos.x / 10)
+  end
   map(self.tiles, 0, 0)
 
   p:draw()
   
-  map(self.fg, 0, 0, p.pos.x / 10)
+  if self.fg then
+    map(self.fg, 0, 0, p.pos.x / 10)
+  end
 
   camera()
 end

@@ -42,7 +42,8 @@ COLORS = {
   DARK = {
     -- darken by N tones
   },
-  BG = 36,
+  BG = 39,
+  BG_AIR = 40,
 }
 
 for i = 1, 10 do
