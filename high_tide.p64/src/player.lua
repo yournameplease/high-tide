@@ -7,7 +7,7 @@ local PLAYER_FRIC = 0.95
 -- TODO: consider bringing the super big strokes.  maybe slightly stronger than these but from an upgrade?
 -- local PLAYER_STROKE_VEL = 0.5
 -- local PLAYER_STROKE_TIME = 45
-local PLAYER_SHORT_STROKE_VEL = 0.06
+local PLAYER_SHORT_STROKE_VEL = 0.05
 local PLAYER_SHORT_STROKE_TIME = 5
 
 -- local PLAYER_STROKE_VEL = PLAYER_SHORT_STROKE_VEL
