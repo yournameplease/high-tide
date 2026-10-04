@@ -8,6 +8,8 @@ local PLAYER_SHORT_STROKE_VEL = 0.1
 local PLAYER_STROKE_TIME = 60
 local PLAYER_SHORT_STROKE_TIME = 15
 
+PLAYER_BASE_AIR = 30 * 60
+
 local PLAYER_FEET_POINTS = {
   vec(-PLAYER_HALF_H, -PLAYER_HALF_W), 
   vec(-PLAYER_HALF_H, PLAYER_HALF_W),
@@ -32,6 +34,8 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field pos vec2
 ---@field t number
 ---@field dir integer quarter turns from angle 0. (0-3)
+---@field air integer ticks of air
+---@field in_air boolean
 local Player = {}
 Player.__index = Player
 
@@ -44,6 +48,7 @@ function player.new(x, y, dir)
     t = 0,
     stroke_t = 0,
     dir = dir,
+    air = PLAYER_BASE_AIR
   }, Player)
 
   return self
@@ -103,6 +108,12 @@ function Player:update()
     -- self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
   
+
+    if self.in_air then
+      self.air = PLAYER_BASE_AIR
+    else
+      self.air = self.air - 1
+    end
 end
 
 function Player:try_move(d_pos, check_feet)
@@ -162,6 +173,8 @@ function Player:try_move(d_pos, check_feet)
     end
   end
 
+
+  self.in_air = is_breathing
   if is_solid or all_air then
     return
   end

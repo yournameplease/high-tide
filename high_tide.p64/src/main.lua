@@ -77,10 +77,11 @@ function _draw()
   lighting.clear()
   lighting.light_rows(-y * TILE_H, TILE_H * 25)
 
-
+  local air_light_factor = 2 * mid(0.1, p.air / PLAYER_BASE_AIR, 0.5)
   local flashlight_step = max(FLASHLIGHT_STEP_MAX - y / FLASHLIGHT_STEP_FACTOR, FLASHLIGHT_STEP_MIN)
   local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
-  lighting.light_disks(CENTER_X, CENTER_Y, 20 + flashlight_offset, flashlight_step)
+  lighting.light_disks(CENTER_X, CENTER_Y,
+    air_light_factor * 20 + flashlight_offset, flashlight_step * air_light_factor)
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 
@@ -103,6 +104,7 @@ function _draw()
 
   color(7)
   print(stat(1))
+  print("AIR: "..p.air // 60)
 end
  
 function _update()
