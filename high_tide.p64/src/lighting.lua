@@ -30,13 +30,13 @@ function lighting.light_disks(x, y, r, dr)
   dtm.pop()
 end
 
-function lighting.light_cone(x1, y1, r1, x2, y2, r2, steps)
+function lighting.light_cone(x1, y1, r1, x2, y2, r2, steps, light_level)
   dtm.push_target(light_buffer)
   for i = 0, steps-1 do
     local x = lerp(i/(steps-1), x1, x2)
     local y = lerp(i/(steps-1), y1, y2)
     local r = lerp(i/(steps-1), r1, r2)
-    circfill(x, y, r, DARK_BASE)
+    circfill(x, y, r, DARK_BASE + light_level)
   end
   dtm.pop()
 end

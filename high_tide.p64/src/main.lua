@@ -92,14 +92,28 @@ function _draw()
   local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
   lighting.light_disks(CENTER_X, CENTER_Y,
     player_light_offset, flashlight_step * air_light_factor)
-  local dir_vec = dir_to_vec(p.dir)
-  local light_start = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_START
-  local light_end = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_END
-  lighting.light_cone(
-    light_start.x, light_start.y, FLASHLIGHT_MIN_R,
-    light_end.x, light_end.y, FLASHLIGHT_MAX_R+flashlight_offset,
-    FLASHLIGHT_STEPS
-  )
+
+  if p.is_flashlight then
+    local lightness = 0
+    if p.battery < 3 * 60 then
+      lightness = 1
+    end
+
+    local factor = 1
+    if p.battery < 50 then
+      factor = p.battery / 50
+    end
+
+    local dir_vec = dir_to_vec(p.dir)
+    local light_start = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_START
+    local light_end = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_END
+    lighting.light_cone(
+      light_start.x, light_start.y, (FLASHLIGHT_MIN_R) * factor,
+      light_end.x, light_end.y, (FLASHLIGHT_MAX_R+flashlight_offset) * factor,
+      FLASHLIGHT_STEPS,
+      lightness
+    )
+  end
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 
@@ -123,6 +137,7 @@ function _draw()
   color(7)
   print(stat(1))
   print("AIR: "..p.air // 60)
+  print("BATTERY: "..p.battery // 60)
 end
  
 function _update()
