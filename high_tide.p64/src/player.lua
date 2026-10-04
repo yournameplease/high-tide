@@ -1,6 +1,8 @@
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
+
+local PLAYER_SCALE = 1
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
 
@@ -300,12 +302,13 @@ function Player:draw()
 
   local hflip = false
   local vflip = false
-  local index = 16 + (self.t //20 ) % 4
+  local index = 40 + (self.t //20 ) % 4
   if self.dir == 1 or self.dir == 3 then index = index + 4 end
   if self.dir == 2 then hflip = true end
   if self.dir == 3 then vflip = true end
   local world_pos = self.pos * TILE_FACTOR
   spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
+  -- sspr(0x30000 | index, 0, 0, 16, 16, world_pos.x,  world_pos.y, 16 * PLAYER_SCALE, 16 * PLAYER_SCALE,  hflip, vflip)
 
   do -- debug points
     -- for i, o in ipairs(PLAYER_ALL_POINTS) do

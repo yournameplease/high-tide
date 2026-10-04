@@ -1,9 +1,15 @@
-SCREEN_W = 480
-SCREEN_H = 270
+-- VID = 3
+-- SCREEN_W = 480 / 2
+-- SCREEN_H = 270 / 2
+
+VID = 4
+SCREEN_W = 480 / 3
+SCREEN_H = 270 / 3
+
 CENTER_X = SCREEN_W / 2
 CENTER_Y = SCREEN_H / 2
-TILE_W = 16
-TILE_H = 16
+TILE_W = 16 / 2
+TILE_H = 16 / 2
 TILE_FACTOR = vec(TILE_W, TILE_H)
 
 require "src.math"
@@ -73,6 +79,8 @@ function _init()
   p = player_mod.new(10, 4, 0)
 
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
+
+  vid(VID)
 end
 
 function _draw()
@@ -120,12 +128,12 @@ function _draw()
   dtm.pop()
 
   -- "water shader"
-  local S = 20
-  for i = 1, S do
-    local y = (i / S + math.sin(global_t / 500) / S) * SCREEN_H 
-    local o = (2 + 1 * math.sin(global_t / 100))
-    screen_buffer:blit(screen_buffer, 5, y, 5 + o, y, SCREEN_W - 10, 2)
-  end
+  -- local S = 20
+  -- for i = 1, S do
+  --   local y = (i / S + math.sin(global_t / 500) / S) * SCREEN_H 
+  --   local o = (2 + 1 * math.sin(global_t / 100))
+  --   screen_buffer:blit(screen_buffer, 5, y, 5 + o, y, SCREEN_W - 10, 2)
+  -- end
 
   cls()
   spr(screen_buffer, 0, 0)
