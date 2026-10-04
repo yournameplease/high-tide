@@ -73,20 +73,34 @@ function Player:update()
 
     if self.stroke_t <= 0 then
 
-      local new_dir
-      if abs(dy) > abs(dx) then
-        if dy >= 0 then new_dir = 3 else new_dir = 1 end
-      elseif abs(dx) > 0 then
-        if dx >= 0 then new_dir = 0 else new_dir = 2 end
-      end
+      if dx ~= 0 or dy ~= 0 then
+        local new_dir
+        local target_angle = atan2(dx, dy) % 1
+        target_angle = flr(8 * (target_angle + 1/16)) / 8
 
-      if new_dir then
-        -- don't turn around hard
-        if abs(self.dir - new_dir) == 2 then
-          new_dir = self.dir
+        
+        local diff = target_angle - self.dir / 4
+        local diff_min = min(abs(diff), abs(1 - diff))
+
+        -- no turns when stick is 45 degrees from current
+        if diff_min > 0.125 then
+          if diff > 0 and diff < 0.5 or diff < -0.5 then
+            new_dir = (self.dir + 1) % 4
+          else
+            new_dir = (self.dir - 1) % 4
+          end
         end
 
-        self:try_turn(new_dir, false)
+        log.debug(self.dir, target_angle, diff, diff_min, new_dir)
+
+        if new_dir then
+          -- don't turn around hard
+          if abs(self.dir - new_dir) == 2 then
+            new_dir = self.dir
+          end
+
+          self:try_turn(new_dir, false)
+        end
       end
 
       if any_move then
