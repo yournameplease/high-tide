@@ -15,12 +15,21 @@ local colors = require "src.colors"
 local lighting = require "src.lighting"
 local world_mod = require "src.world"
 
-local FLASHLIGHT_STEP_FACTOR = 5
+local PLAYER_LIGHT_STEP_FACTOR = 5
 -- in pixels
-local FLASHLIGHT_STEP_MIN = 10
-local FLASHLIGHT_STEP_MAX = 50
-local FLASHLIGHT_AMP = 10
-local FLASHLIGHT_FREQ = 60 * 10
+local PLAYER_LIGHT_STEP_MIN = 10
+local PLAYER_LIGHT_STEP_MAX = 50
+local PLAYER_LIGHT_AMP = 5
+local PLAYER_LIGHT_FREQ = 60 * 10
+
+local FLASHLIGHT_AMP = 5
+local FLASHLIGHT_FREQ = 60 * 1
+
+local FLASHLIGHT_MIN_R = 5
+local FLASHLIGHT_MAX_R = 20
+local FLASHLIGHT_START = 20
+local FLASHLIGHT_END = 80
+local FLASHLIGHT_STEPS = 9
 
 CONFIG = {
   LOG_LEVEL = "DEBUG",  
@@ -78,10 +87,19 @@ function _draw()
   lighting.light_rows(-y * TILE_H, TILE_H * 25)
 
   local air_light_factor = 2 * mid(0.1, p.air / PLAYER_BASE_AIR, 0.5)
-  local flashlight_step = max(FLASHLIGHT_STEP_MAX - y / FLASHLIGHT_STEP_FACTOR, FLASHLIGHT_STEP_MIN)
+  local flashlight_step = max(PLAYER_LIGHT_STEP_MAX - y / PLAYER_LIGHT_STEP_FACTOR, PLAYER_LIGHT_STEP_MIN)
+  local player_light_offset = PLAYER_LIGHT_AMP * math.sin(global_t / PLAYER_LIGHT_FREQ)
   local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
   lighting.light_disks(CENTER_X, CENTER_Y,
-    air_light_factor * 20 + flashlight_offset, flashlight_step * air_light_factor)
+    player_light_offset, flashlight_step * air_light_factor)
+  local dir_vec = dir_to_vec(p.dir)
+  local light_start = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_START
+  local light_end = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_END
+  lighting.light_cone(
+    light_start.x, light_start.y, FLASHLIGHT_MIN_R,
+    light_end.x, light_end.y, FLASHLIGHT_MAX_R+flashlight_offset,
+    FLASHLIGHT_STEPS
+  )
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 

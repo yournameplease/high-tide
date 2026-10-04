@@ -1,3 +1,6 @@
+function lerp(t, a, b)
+  return t * (b - a) + a
+end
 
 ---@param a integer
 ---@param b integer
