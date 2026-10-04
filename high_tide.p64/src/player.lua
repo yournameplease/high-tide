@@ -9,6 +9,8 @@ local PLAYER_STROKE_TIME = 45
 local PLAYER_SHORT_STROKE_TIME = 15
 
 PLAYER_BASE_AIR = 30 * 60
+PLAYER_BASE_BATTERY = 15 * 60
+BATTERY_WEAK_DURATION = 1 * 60
 
 local PLAYER_FEET_POINTS = {
   vec(-PLAYER_HALF_H, -PLAYER_HALF_W), 
@@ -36,6 +38,7 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field dir integer quarter turns from angle 0. (0-3)
 ---@field air integer ticks of air
 ---@field in_air boolean
+---@field is_flashlight boolean
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
 Player.__index = Player
@@ -50,6 +53,8 @@ function player.new(x, y, dir)
     stroke_t = 0,
     dir = dir,
     air = PLAYER_BASE_AIR,
+    is_flashlight = false,
+    battery = PLAYER_BASE_BATTERY,
     held_stroke = false,
   }, Player)
 
@@ -62,6 +67,17 @@ function Player:update()
     local dx = 0
     local dy = 0
 
+    if btnp(4) or btnp(5) then
+      self.is_flashlight = not self.is_flashlight
+
+      if self.battery < 0 then self.battery = BATTERY_WEAK_DURATION end
+    end
+
+    if self.is_flashlight then
+      self.battery = self.battery - 1
+      if self.battery < 0 then self.is_flashlight = false end
+    end
+    
     if (btn(0))then any_move = true dx = dx - 1 end
     if (btn(1))then any_move = true dx = dx + 1 end
     if (btn(2))then any_move = true dy = dy - 1 end
@@ -134,6 +150,8 @@ function Player:update()
 
     if self.in_air then
       self.air = PLAYER_BASE_AIR
+      -- consider restricting this to "sun" tiles?
+      self.battery = PLAYER_BASE_BATTERY
     else
       self.air = self.air - 1
     end
