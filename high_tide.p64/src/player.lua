@@ -3,14 +3,23 @@ local PLAYER_HALF_W = 0.2
 local PLAYER_FRIC = 0.95
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
-local PLAYER_STROKE_VEL = 0.4
-local PLAYER_SHORT_STROKE_VEL = 0.13
-local PLAYER_STROKE_TIME = 45
-local PLAYER_SHORT_STROKE_TIME = 15
+
+-- TODO: consider bringing the super big strokes.  maybe slightly stronger than these but from an upgrade?
+-- local PLAYER_STROKE_VEL = 0.5
+-- local PLAYER_STROKE_TIME = 45
+local PLAYER_SHORT_STROKE_VEL = 0.07
+local PLAYER_SHORT_STROKE_TIME = 5
+
+-- local PLAYER_STROKE_VEL = PLAYER_SHORT_STROKE_VEL
+-- local PLAYER_STROKE_TIME = PLAYER_SHORT_STROKE_TIME
+-- feels like slightly faster than held, which is intended.
+-- does this inspire too annoying button mashing?
+local PLAYER_STROKE_VEL = 0.3
+local PLAYER_STROKE_TIME = 20
 
 PLAYER_BASE_AIR = 30 * 60
 PLAYER_BASE_BATTERY = 15 * 60
-BATTERY_WEAK_DURATION = 1 * 60
+BATTERY_WEAK_DURATION = 2 * 60
 
 local PLAYER_FEET_POINTS = {
   vec(-PLAYER_HALF_H, -PLAYER_HALF_W), 
