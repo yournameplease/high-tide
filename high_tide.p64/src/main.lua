@@ -51,7 +51,6 @@ local COLOR_TABLE_ADDRS = {
 
 local global_t = 0
 local screen_buffer
-local game = {}
 
 -- globals (eww) for convenience
 world = {}
@@ -75,7 +74,7 @@ end
 function _init()
   colors.build_color_palette()
   
-  game.world = world_mod.new("map/shallows.map")
+  world = world_mod.new("map/shallows.map")
   p = player_mod.new(10, 4, 0)
 
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
@@ -88,7 +87,7 @@ function _draw()
   
   dtm.push_target(screen_buffer)
 
-  game.world:draw()
+  world:draw()
   
   camera()
   lighting.clear()
@@ -150,6 +149,6 @@ end
  
 function _update()
   global_t = global_t + 1
-  game.world:update()
+  world:update()
   p:update()
 end

@@ -1,8 +1,8 @@
 
 local WATER_X_AMP = 0.0004
-local WATER_Y_AMP = 0.0004
-local WATER_X_FREQ = 127
-local WATER_Y_FREQ = 63
+local WATER_Y_AMP = 0.0006
+local WATER_X_FREQ = 10 * 60
+local WATER_Y_FREQ = 2 * 60
 local WATER_X_PHASE = 150
 
 ---@class World

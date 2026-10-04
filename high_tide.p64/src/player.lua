@@ -167,7 +167,7 @@ function Player:update()
        self.t =  self.t // 2
     end
 
-    -- self.vel = self.vel + world.water_vel
+    self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
   
 
