@@ -4,8 +4,8 @@ local PLAYER_FRIC = 0.95
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
 local PLAYER_STROKE_VEL = 0.4
-local PLAYER_SHORT_STROKE_VEL = 0.1
-local PLAYER_STROKE_TIME = 60
+local PLAYER_SHORT_STROKE_VEL = 0.13
+local PLAYER_STROKE_TIME = 45
 local PLAYER_SHORT_STROKE_TIME = 15
 
 PLAYER_BASE_AIR = 30 * 60
@@ -36,6 +36,7 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field dir integer quarter turns from angle 0. (0-3)
 ---@field air integer ticks of air
 ---@field in_air boolean
+---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
 Player.__index = Player
 
@@ -48,7 +49,8 @@ function player.new(x, y, dir)
     t = 0,
     stroke_t = 0,
     dir = dir,
-    air = PLAYER_BASE_AIR
+    air = PLAYER_BASE_AIR,
+    held_stroke = false,
   }, Player)
 
   return self
@@ -57,34 +59,54 @@ end
 function Player:update()
     local any_move = false
 
+    local dx = 0
+    local dy = 0
+
+    if (btn(0))then any_move = true dx = dx - 1 end
+    if (btn(1))then any_move = true dx = dx + 1 end
+    if (btn(2))then any_move = true dy = dy - 1 end
+    if (btn(3))then any_move = true dy = dy + 1 end
+
+    if not any_move then
+      self.stroke_held = false
+    end
+
     if self.stroke_t <= 0 then
-      local dx = 0
-      local dy = 0
-      if (btn(0))then any_move = true dx = dx - 1 end
-      if (btn(1))then any_move = true dx = dx + 1 end
-      if (btn(2))then any_move = true dy = dy - 1 end
-      if (btn(3))then any_move = true dy = dy + 1 end
 
-      local new_dir
-      if abs(dy) > abs(dx) then
-        if dy >= 0 then new_dir = 3 else new_dir = 1 end
-      elseif abs(dx) > 0 then
-        if dx >= 0 then new_dir = 0 else new_dir = 2 end
-      end
+      if dx ~= 0 or dy ~= 0 then
+        local new_dir
+        local target_angle = atan2(dx, dy) % 1
+        target_angle = flr(8 * (target_angle + 1/16)) / 8
 
-      if new_dir then
-        -- don't turn around hard
-        if abs(self.dir - new_dir) == 2 then
-          new_dir = self.dir
+        
+        local diff = target_angle - self.dir / 4
+        local diff_min = min(abs(diff), abs(1 - diff))
+
+        -- no turns when stick is 45 degrees from current
+        if diff_min > 0.125 then
+          if diff > 0 and diff < 0.5 or diff < -0.5 then
+            new_dir = (self.dir + 1) % 4
+          else
+            new_dir = (self.dir - 1) % 4
+          end
         end
 
-        self.dir = new_dir
+        log.debug(self.dir, target_angle, diff, diff_min, new_dir)
+
+        if new_dir then
+          -- don't turn around hard
+          if abs(self.dir - new_dir) == 2 then
+            new_dir = self.dir
+          end
+
+          self:try_turn(new_dir, false)
+        end
       end
 
       if any_move then
 
         local stroke_vel
-        if btn(4) or btn(5) then
+        if self.stroke_held then
           stroke_vel = PLAYER_SHORT_STROKE_VEL
           self.stroke_t = PLAYER_SHORT_STROKE_TIME
         else
@@ -92,6 +114,7 @@ function Player:update()
           self.stroke_t = PLAYER_STROKE_TIME
         end
         
+        self.stroke_held = true
         self.vel = self.vel + stroke_vel * normalize(vec(dx, dy))
       end
     else
@@ -116,17 +139,16 @@ function Player:update()
     end
 end
 
-function Player:try_move(d_pos, check_feet)
-  local new_pos = self.pos + d_pos
-  
+function Player:test_collision(pos, dir, check_feet)
+
   local is_solid = false
   local is_push = false
   local all_air = true
   local push_dir
   local is_breathing = false
   for i, o in ipairs(PLAYER_BODY_POINTS) do
-    local step = vec_rot(o, self.dir/4)
-    local tile_pos = new_pos + step
+    local step = vec_rot(o, dir/4)
+    local tile_pos = pos + step
     local tile = tiles:get(tile_pos.x, tile_pos.y)
 
     if fget(tile, 0) then
@@ -137,8 +159,8 @@ function Player:try_move(d_pos, check_feet)
     end
   end
   for i, o in ipairs(PLAYER_FEET_POINTS) do
-    local step = vec_rot(o, self.dir/4)
-    local tile_pos = new_pos + step
+    local step = vec_rot(o, dir/4)
+    local tile_pos = pos + step
     local tile = tiles:get(tile_pos.x, tile_pos.y)
 
     if fget(tile, 0) then
@@ -151,8 +173,8 @@ function Player:try_move(d_pos, check_feet)
     end
   end
   for i, o in ipairs(PLAYER_HEAD_POINTS) do
-    local step = vec_rot(o, self.dir/4)
-    local tile_pos = new_pos + step
+    local step = vec_rot(o, dir/4)
+    local tile_pos = pos + step
     local tile = tiles:get(tile_pos.x, tile_pos.y)
     if fget(tile, 0) then
       if i == 1 or i == 3 then
@@ -173,13 +195,23 @@ function Player:try_move(d_pos, check_feet)
     end
   end
 
-
+  -- side effect!!!
   self.in_air = is_breathing
-  if is_solid or all_air then
-    return
-  end
+  return is_solid or all_air
+end
 
-  self.pos = new_pos
+function Player:try_move(d_pos, check_feet)
+  local new_pos = self.pos + d_pos
+  
+  if not self:test_collision(new_pos, self.dir, check_feet) then
+    self.pos = new_pos
+  end
+end
+
+function Player:try_turn(new_dir, check_feet)
+  if not self:test_collision(self.pos, new_dir, check_feet) then
+    self.dir = new_dir
+  end
 end
 
 
