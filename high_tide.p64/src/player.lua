@@ -9,7 +9,7 @@ local PLAYER_SCALE = 1
 -- TODO: consider bringing the super big strokes.  maybe slightly stronger than these but from an upgrade?
 -- local PLAYER_STROKE_VEL = 0.5
 -- local PLAYER_STROKE_TIME = 45
-local PLAYER_SHORT_STROKE_VEL = 0.05
+local PLAYER_SHORT_STROKE_VEL = 0.04
 local PLAYER_SHORT_STROKE_TIME = 5
 
 -- local PLAYER_STROKE_VEL = PLAYER_SHORT_STROKE_VEL
@@ -119,7 +119,7 @@ function Player:update()
             dir_step = -1
           end
 
-          if not self.heading_forward then
+          if not self.heading_forward and not self:can_spin() then
             dir_step = -dir_step
           end
 
@@ -139,7 +139,6 @@ function Player:update()
           self.heading_forward = false
         end
 
-        log.debug(self.dir, target_angle, self.heading_forward)
       end
 
       if any_move then
@@ -160,7 +159,7 @@ function Player:update()
       self.stroke_t = self.stroke_t - 1
     end
 
-    self:move(p, self.vel.x, self.vel.y)
+    self:move()
     self.t =  self.t + 1
 
     self.vel = self.vel + world.water_vel
@@ -176,7 +175,7 @@ function Player:update()
     end
 end
 
-function Player:test_collision(pos, dir)
+function Player:is_collision(pos, dir)
 
   local is_solid = false
   local is_push = false
@@ -238,19 +237,28 @@ end
 function Player:try_move(d_pos)
   local new_pos = self.pos + d_pos
   
-  if not self:test_collision(new_pos, self.dir) then
+  if not self:is_collision(new_pos, self.dir) then
     self.pos = new_pos
   end
 end
 
 ---@return boolean success
 function Player:try_turn(new_dir)
-  if not self:test_collision(self.pos, new_dir) then
+  if not self:is_collision(self.pos, new_dir) then
     self.dir = new_dir
 
     return true
   end
   return false
+end
+
+function Player:can_spin()
+  for i = 0, 3 do
+    if self:is_collision(self.pos, i) then
+      return false
+    end
+  end
+  return true
 end
 
 
