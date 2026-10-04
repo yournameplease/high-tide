@@ -7,7 +7,7 @@ local PLAYER_FRIC = 0.95
 -- TODO: consider bringing the super big strokes.  maybe slightly stronger than these but from an upgrade?
 -- local PLAYER_STROKE_VEL = 0.5
 -- local PLAYER_STROKE_TIME = 45
-local PLAYER_SHORT_STROKE_VEL = 0.07
+local PLAYER_SHORT_STROKE_VEL = 0.06
 local PLAYER_SHORT_STROKE_TIME = 5
 
 -- local PLAYER_STROKE_VEL = PLAYER_SHORT_STROKE_VEL
@@ -48,6 +48,7 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field air integer ticks of air
 ---@field in_air boolean
 ---@field is_flashlight boolean
+---@field heading_forward boolean true for forward, false for backward.  used for turning
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
 Player.__index = Player
@@ -65,6 +66,7 @@ function player.new(x, y, dir)
     is_flashlight = false,
     battery = PLAYER_BASE_BATTERY,
     held_stroke = false,
+    heading_forward = true,
   }, Player)
 
   return self
@@ -103,29 +105,39 @@ function Player:update()
         local target_angle = atan2(dx, dy) % 1
         target_angle = flr(8 * (target_angle + 1/16)) / 8
 
-        
         local diff = target_angle - self.dir / 4
-        local diff_min = min(abs(diff), abs(1 - diff))
+        local diff_min = min(abs(diff), abs(1 - abs(diff)))
 
         -- no turns when stick is 45 degrees from current
         if diff_min > 0.125 then
+          local dir_step
           if diff > 0 and diff < 0.5 or diff < -0.5 then
-            new_dir = (self.dir + 1) % 4
+            dir_step = 1
           else
-            new_dir = (self.dir - 1) % 4
+            dir_step = -1
           end
+
+          if not self.heading_forward then
+            dir_step = -dir_step
+          end
+
+          new_dir = (self.dir + dir_step) % 4
         end
 
-        log.debug(self.dir, target_angle, diff, diff_min, new_dir)
-
+        local did_turn
         if new_dir then
-          -- don't turn around hard
-          if abs(self.dir - new_dir) == 2 then
-            new_dir = self.dir
-          end
-
-          self:try_turn(new_dir, false)
+          did_turn = self:try_turn(new_dir)
         end
+
+        local new_diff = target_angle - self.dir / 4
+        local new_diff_min = min(abs(new_diff), abs(1 - abs(new_diff)))
+        if new_diff_min < 0.25 or did_turn then
+          self.heading_forward = true
+        elseif new_diff_min > 0.25 then
+          self.heading_forward = false
+        end
+
+        log.debug(self.dir, target_angle, self.heading_forward)
       end
 
       if any_move then
@@ -233,10 +245,14 @@ function Player:try_move(d_pos)
   end
 end
 
+---@return boolean success
 function Player:try_turn(new_dir)
   if not self:test_collision(self.pos, new_dir) then
     self.dir = new_dir
+
+    return true
   end
+  return false
 end
 
 
