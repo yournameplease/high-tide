@@ -4,8 +4,8 @@ local PLAYER_FRIC = 0.95
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
 local PLAYER_STROKE_VEL = 0.4
-local PLAYER_SHORT_STROKE_VEL = 0.1
-local PLAYER_STROKE_TIME = 60
+local PLAYER_SHORT_STROKE_VEL = 0.13
+local PLAYER_STROKE_TIME = 45
 local PLAYER_SHORT_STROKE_TIME = 15
 
 PLAYER_BASE_AIR = 30 * 60
@@ -36,6 +36,7 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field dir integer quarter turns from angle 0. (0-3)
 ---@field air integer ticks of air
 ---@field in_air boolean
+---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
 Player.__index = Player
 
@@ -48,7 +49,8 @@ function player.new(x, y, dir)
     t = 0,
     stroke_t = 0,
     dir = dir,
-    air = PLAYER_BASE_AIR
+    air = PLAYER_BASE_AIR,
+    held_stroke = false,
   }, Player)
 
   return self
@@ -57,13 +59,19 @@ end
 function Player:update()
     local any_move = false
 
+    local dx = 0
+    local dy = 0
+
+    if (btn(0))then any_move = true dx = dx - 1 end
+    if (btn(1))then any_move = true dx = dx + 1 end
+    if (btn(2))then any_move = true dy = dy - 1 end
+    if (btn(3))then any_move = true dy = dy + 1 end
+
+    if not any_move then
+      self.stroke_held = false
+    end
+
     if self.stroke_t <= 0 then
-      local dx = 0
-      local dy = 0
-      if (btn(0))then any_move = true dx = dx - 1 end
-      if (btn(1))then any_move = true dx = dx + 1 end
-      if (btn(2))then any_move = true dy = dy - 1 end
-      if (btn(3))then any_move = true dy = dy + 1 end
 
       local new_dir
       if abs(dy) > abs(dx) then
@@ -84,7 +92,7 @@ function Player:update()
       if any_move then
 
         local stroke_vel
-        if btn(4) or btn(5) then
+        if self.stroke_held then
           stroke_vel = PLAYER_SHORT_STROKE_VEL
           self.stroke_t = PLAYER_SHORT_STROKE_TIME
         else
@@ -92,6 +100,7 @@ function Player:update()
           self.stroke_t = PLAYER_STROKE_TIME
         end
         
+        self.stroke_held = true
         self.vel = self.vel + stroke_vel * normalize(vec(dx, dy))
       end
     else
