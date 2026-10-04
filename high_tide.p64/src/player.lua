@@ -109,7 +109,7 @@ function Player:update()
         local diff_min = min(abs(diff), abs(1 - abs(diff)))
 
         -- no turns when stick is 45 degrees from current
-        if diff_min > 0.125 then
+        if diff_min > 0.125 and diff_min < 0.5 then
           local dir_step
           if diff > 0 and diff < 0.5 or diff < -0.5 then
             dir_step = 1
@@ -305,7 +305,7 @@ function Player:draw()
   if self.dir == 2 then hflip = true end
   if self.dir == 3 then vflip = true end
   local world_pos = self.pos * TILE_FACTOR
-  spr(0x30000 | index, world_pos.x,  world_pos.y + ( self.t//20%2),  hflip, vflip)
+  spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
 
   do -- debug points
     for i, o in ipairs(PLAYER_ALL_POINTS) do
