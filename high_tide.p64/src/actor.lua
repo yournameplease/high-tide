@@ -1,4 +1,4 @@
-local ACTOR_FRIC = 0.95
+ACTOR_FRIC = 0.95
 
 
 local BUBBLE_ACCEL_TIME = 3 * 60
