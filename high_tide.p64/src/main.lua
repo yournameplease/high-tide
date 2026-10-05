@@ -21,6 +21,7 @@ local colors = require "src.colors"
 local lighting = require "src.lighting"
 local world_mod = require "src.world"
 local player_mod = require "src.player"
+local actor = require "src.actor"
 
 local PLAYER_LIGHT_STEP_FACTOR = 5
 -- in pixels
@@ -55,6 +56,7 @@ local screen_buffer
 -- globals (eww) for convenience
 world = {}
 p = {}
+actors = {}
 tiles = {}
 
 
@@ -77,6 +79,17 @@ function _init()
   world = world_mod.new("map/shallows.map")
   p = player_mod.new(10, 4, 0)
 
+
+  for x = 0, tiles:width() - 1 do
+    for y = 0, tiles:height() - 1 do
+      local t = tiles:get(x, y)
+
+      if fget(t, 2) then
+        add(actors, actor.bubble_spawner(vec(x + 0.5, y + 0.5)))
+      end
+    end
+  end
+  
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
 
   vid(VID)
@@ -150,5 +163,17 @@ end
 function _update()
   global_t = global_t + 1
   world:update()
+
+  local i = 1
+  while i <= #actors do
+    local a = actors[i]
+    a:update()
+    if a.should_die then
+      -- note: O(n^2)
+      deli(actors, i)
+    else
+      i = i+1
+    end
+  end
   p:update()
 end

@@ -18,6 +18,11 @@ function vec_rot(v, a)
   return vec(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a)
 end
 
+---@param a number picotron angle
+function vec_from_angle(a)
+  return vec(cos(a), sin(a)) 
+end
+
 function vec_equals(v, u)
   return v.x == u.x and v.y == u.y 
 end

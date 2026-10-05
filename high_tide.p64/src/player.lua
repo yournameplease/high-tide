@@ -1,7 +1,10 @@
+local actor = require "src.actor"
+
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
 
+local BREATH_PARTICLE_SPEED = 0.02
 local PLAYER_SCALE = 1
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
@@ -165,6 +168,32 @@ function Player:update()
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
   
+
+    do -- air bubbles
+      local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
+      local head_pos = self.pos + step
+      for _, a in ipairs(actors) do
+        if a.type == "bubble" and a.t > 4 * 60 and
+        norm_squared(head_pos - a.pos) < 0.4 then
+
+          self.in_air = true
+          a.should_die = true
+          for i = 1, 4 do
+            
+            -- TODO I'd rather these be emitted on a delay in sequence
+            local p = actor.new_particle(
+              head_pos,
+              vec(rnd(0.1)-0.05, -i * BREATH_PARTICLE_SPEED),
+              ACTOR_FRIC,
+              PARTICLE_LIFESPAN
+            )
+            add(actors, p)
+          end
+
+          break
+        end 
+      end
+    end
 
     if self.in_air then
       self.air = PLAYER_BASE_AIR
