@@ -43,7 +43,10 @@ COLORS = {
     -- darken by N tones
   },
   BG = 39,
-  BG_AIR = 40,
+  BG_AIR = 39,
+  TERRAIN = 49,
+  PARTICLE = 50,
+  ENTITY = 50,
 }
 
 for i = 1, 10 do

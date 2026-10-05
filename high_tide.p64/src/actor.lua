@@ -4,6 +4,9 @@ local ACTOR_FRIC = 0.95
 local BUBBLE_ACCEL_TIME = 3 * 60
 local BUBBLE_ACCEL = 0.0005
 local BUBBLE_LIFESPAN = 20 * 60
+local BUBBLE_POP_SPEED = 0.04
+
+PARTICLE_LIFESPAN = 1 * 60
 
 ---@class Actor
 ---@field type string
@@ -32,9 +35,25 @@ function actor.new_bubble(pos)
     type = "bubble",
     pos = pos,
     vel = vec(0, 0),
+    fric = ACTOR_FRIC,
     t = 0,
     lifespan = BUBBLE_LIFESPAN,
     sprite_index = 56,
+    is_solid = false,
+  }, Actor)
+
+  return self
+end
+
+-- just a full actor for particles... for now...
+function actor.new_particle(pos, vel, fric, lifespan)
+  local self = setmetatable({
+    type = "particle",
+    pos = pos,
+    vel = vel,
+    fric = fric,
+    t = 0,
+    lifespan = lifespan,
     is_solid = false,
   }, Actor)
 
@@ -76,20 +95,38 @@ function Actor:update()
 
     if self.t > self.lifespan then
       self.should_die = true
+
+      
+      if self.type == "bubble" then
+        for i = 0, 9 do
+        
+          local p = actor.new_particle(
+            self.pos + 0.3 * vec_from_angle(i/10),
+            BUBBLE_POP_SPEED * vec_from_angle(i /10),
+            ACTOR_FRIC,
+            PARTICLE_LIFESPAN
+          )
+          add(actors, p)
+        end
+      end
     end
     
 end
 
-
 function Actor:draw()
+  local world_pos = self.pos * TILE_FACTOR
+
+  if self.type == "particle" then
+    pset(world_pos.x, world_pos.y, COLORS.PARTICLE)      
+    return
+  end
+  
   local index = self.sprite_index
   if self.type == "bubble" then
     index = index + min(self.t // (1 * 60), 3)
   end
   local hflip = false
   local vflip = false
-
-  local world_pos = self.pos * TILE_FACTOR
 
   spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
 end
