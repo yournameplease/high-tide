@@ -64,6 +64,10 @@ function World:draw()
   end
   map(self.tiles, 0, 0)
 
+  for _,a in ipairs(actors) do
+    a:draw()
+  end
+  
   p:draw()
   
   if self.fg then
