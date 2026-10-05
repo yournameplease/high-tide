@@ -41,6 +41,12 @@ function lighting.light_cone(x1, y1, r1, x2, y2, r2, steps, light_level)
   dtm.pop()
 end
 
+function lighting.light_spr(s, x, y, flip_x, flip_y)
+  dtm.push_target(light_buffer)
+  spr(s, x, y, flip_x, flip_y)
+  dtm.pop()
+end
+
 function lighting.draw_lighting()
   spr(light_buffer)
 end
