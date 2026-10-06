@@ -52,6 +52,7 @@ COLORS = {
 for i = 1, 10 do
   COLORS.DARK[i] = COLORTABLE_BASE + i
 end
+  COLORS.HARD_DARK = COLORTABLE_BASE + #COLORS.DARK + 1 
 
 assert(COLORTABLE_BASE + #COLORS.DARK < 64, "too many colors!  move them around")
 
@@ -94,6 +95,10 @@ function colors.build_color_palette()
       -- transparent with respect to base palette
       colortable:set(i, c, i)
     end
+  end
+  for i = 0, 63 do
+    -- transparent with respect to base palette
+    colortable:set(i, COLORS.HARD_DARK, COLORS.DARK[#COLORS.DARK])
   end
 
   colortable:poke(0x8000)

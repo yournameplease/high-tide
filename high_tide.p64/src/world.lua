@@ -27,6 +27,8 @@ function world.new(map_path)
   -- self.fg = m[3].bmp
   self.tiles = m[1].bmp
 
+  lighting_tiles = m[2].bmp
+
   tiles = self.tiles
 
   self.t = 0

@@ -25,8 +25,9 @@ local actor = require "src.actor"
 
 local PLAYER_LIGHT_STEP_FACTOR = 5
 -- in pixels
-local PLAYER_LIGHT_STEP_MIN = 10
-local PLAYER_LIGHT_STEP_MAX = 50
+local PLAYER_LIGHT_MIN = 10
+local PLAYER_LIGHT_STEP_MIN = 5
+local PLAYER_LIGHT_STEP_MAX = 15
 local PLAYER_LIGHT_AMP = 5
 local PLAYER_LIGHT_FREQ = 60 * 10
 
@@ -35,7 +36,7 @@ local FLASHLIGHT_FREQ = 60 * 1
 
 local FLASHLIGHT_MIN_R = 5
 local FLASHLIGHT_MAX_R = 20
-local FLASHLIGHT_START = 20
+local FLASHLIGHT_START = 10
 local FLASHLIGHT_END = 80
 local FLASHLIGHT_STEPS = 9
 
@@ -102,18 +103,21 @@ function _draw()
 
   world:draw()
   
-  camera()
   lighting.clear()
-  lighting.light_rows(-y * TILE_H, TILE_H * 25)
+  lighting.light_tiles()
+  -- lighting.light_rows(-y * TILE_H, TILE_H * 25)
 
-  local air_light_factor = 2 * mid(0.1, p.air / PLAYER_BASE_AIR, 0.5)
-  local flashlight_step = max(PLAYER_LIGHT_STEP_MAX - y / PLAYER_LIGHT_STEP_FACTOR, PLAYER_LIGHT_STEP_MIN)
-  local player_light_offset = PLAYER_LIGHT_AMP * math.sin(global_t / PLAYER_LIGHT_FREQ)
-  local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
-  lighting.light_disks(CENTER_X, CENTER_Y,
-    player_light_offset, flashlight_step * air_light_factor)
 
+  lighting.light_vignette()
   if p.is_flashlight then
+
+    local air_light_factor = 2 * mid(0.1, p.air / PLAYER_BASE_AIR, 0.5)
+    local flashlight_step = max(PLAYER_LIGHT_STEP_MAX - y / PLAYER_LIGHT_STEP_FACTOR, PLAYER_LIGHT_STEP_MIN)
+    local player_light_offset = PLAYER_LIGHT_MIN + PLAYER_LIGHT_AMP * math.sin(global_t / PLAYER_LIGHT_FREQ)
+    local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
+    -- lighting.light_disks(CENTER_X, CENTER_Y,
+    --   player_light_offset, flashlight_step * air_light_factor)
+
     local lightness = 0
     if p.battery < 3 * 60 then
       lightness = 1
@@ -124,15 +128,30 @@ function _draw()
       factor = p.battery / 50
     end
 
+    
     local dir_vec = dir_to_vec(p.dir)
     local light_start = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_START
     local light_end = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_END
-    lighting.light_cone(
-      light_start.x, light_start.y, (FLASHLIGHT_MIN_R) * factor,
-      light_end.x, light_end.y, (FLASHLIGHT_MAX_R+flashlight_offset) * factor,
-      FLASHLIGHT_STEPS,
-      lightness
-    )
+    -- lighting.light_cone(
+    --   light_start.x, light_start.y, (FLASHLIGHT_MIN_R) * factor,
+    --   light_end.x, light_end.y, (FLASHLIGHT_MAX_R+flashlight_offset) * factor,
+    --   FLASHLIGHT_STEPS,
+    --   lightness
+    -- )
+    --
+     
+    local flashlight_s = 32 + p.dir
+    if p.dir == 0 then
+      flashlight_s = flashlight_s | 0x20000
+    elseif p.dir == 1 then
+      flashlight_s = flashlight_s | 0x90000
+    elseif p.dir == 2 then
+      flashlight_s = flashlight_s | 0x60000
+    elseif p.dir == 3 then
+      flashlight_s = flashlight_s | 0x10000
+    end
+    lighting.light_spr(flashlight_s, light_start.x, light_start.y)
+
   end
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
