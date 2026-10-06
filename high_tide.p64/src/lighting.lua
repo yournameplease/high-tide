@@ -30,9 +30,15 @@ end
 function lighting.light_vignette()
   dtm.push_target(light_buffer)
 
-  circfill(CENTER_X, CENTER_Y, 80, 0x800000000 | COLORS.HARD_DARK)
+  local r0 = 70
+  local air = p.air
+  if air < 10 * 60 then
+    r0 = lerp(air / 600, 0, 70)
+  end
+
+  circfill(CENTER_X, CENTER_Y, r0, 0x800000000 | COLORS.HARD_DARK)
   fillp(0xa5a5)
-  circfill(CENTER_X, CENTER_Y, 70, 0x800000000 | COLORS.HARD_DARK)
+  circfill(CENTER_X, CENTER_Y, r0 - 10, 0x800000000 | COLORS.HARD_DARK)
   fillp()
   local p_pos = p.pos * TILE_FACTOR
   local cam_x = p_pos.x - CENTER_X
