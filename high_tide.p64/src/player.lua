@@ -23,6 +23,8 @@ local PLAYER_STROKE_VEL = 0.3
 local PLAYER_STROKE_TIME = 20
 
 PLAYER_BASE_AIR = 30 * 60
+PLAYER_AIR_BUBBLE_RESTORE = 10 * 60
+PLAYER_AIR_BUBBLE_TIME = 1 * 60
 PLAYER_BASE_BATTERY = 15 * 60
 BATTERY_WEAK_DURATION = 2 * 60
 
@@ -51,7 +53,9 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field t number
 ---@field dir integer quarter turns from angle 0. (0-3)
 ---@field air integer ticks of air
----@field in_air boolean
+---@field in_air_tile boolean
+---@field in_air_bubble boolean
+---@field air_bubble_t integer
 ---@field is_flashlight boolean
 ---@field heading_forward boolean true for forward, false for backward.  used for turning
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
@@ -72,6 +76,7 @@ function player.new(x, y, dir)
     battery = PLAYER_BASE_BATTERY,
     held_stroke = false,
     heading_forward = true,
+    air_bubble_t = 0,
   }, Player)
 
   return self
@@ -176,7 +181,7 @@ function Player:update()
         if a.type == "bubble" and a.t > 4 * 60 and
         norm_squared(head_pos - a.pos) < 0.4 then
 
-          self.in_air = true
+          self.in_air_bubble = true
           a.should_die = true
           for i = 1, 4 do
             
@@ -195,13 +200,20 @@ function Player:update()
       end
     end
 
-    if self.in_air then
-      self.air = PLAYER_BASE_AIR
+    if self.air_bubble_t > 0 then
+      self.air_bubble_t = self.air_bubble_t - 1
+      self.air = self.air + PLAYER_BASE_AIR * 0.01
+    elseif self.in_air_tile then
+      self.air = self.air + PLAYER_BASE_AIR * 0.01
       -- consider restricting this to "sun" tiles?
       self.battery = PLAYER_BASE_BATTERY
+    elseif self.in_air_bubble and not self.is_air_bubbling then
+      self.in_air_bubble = false
+      self.air_bubble_t = PLAYER_AIR_BUBBLE_TIME
     else
       self.air = self.air - 1
     end
+    self.air = min(self.air, PLAYER_BASE_AIR)
 end
 
 function Player:is_collision(pos, dir)
@@ -259,7 +271,7 @@ function Player:is_collision(pos, dir)
   end
 
   -- side effect!!!
-  self.in_air = is_breathing
+  self.in_air_tile = is_breathing
   return is_solid or all_air
 end
 

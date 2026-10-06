@@ -32,9 +32,18 @@ function lighting.light_vignette()
 
   local r0 = 70
   local air = p.air
-  if air < 10 * 60 then
-    r0 = lerp(air / 600, 0, 70)
-  end
+
+  -- slow -> fast vignette.
+  -- it's nice, but harder for player to know how long they have
+  -- local fast_cut = 5 * 60
+  -- if air >= fast_cut then
+  --   air = air - fast_cut
+  --   r0 = lerp((air) / (PLAYER_BASE_AIR-fast_cut), 40, 70)
+  -- else
+  --   r0 = lerp(air / fast_cut, -10, 40)
+  -- end
+
+  r0 = lerp((air) / (PLAYER_BASE_AIR), -5, 70)
 
   circfill(CENTER_X, CENTER_Y, r0, 0x800000000 | COLORS.HARD_DARK)
   fillp(0xa5a5)

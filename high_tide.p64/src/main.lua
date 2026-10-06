@@ -108,6 +108,7 @@ function _draw()
   -- lighting.light_rows(-y * TILE_H, TILE_H * 25)
 
 
+  lighting.light_vignette()
   if p.is_flashlight then
 
     local air_light_factor = 2 * mid(0.1, p.air / PLAYER_BASE_AIR, 0.5)
@@ -152,7 +153,6 @@ function _draw()
     lighting.light_spr(flashlight_s, light_start.x, light_start.y)
 
   end
-  lighting.light_vignette()
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 
