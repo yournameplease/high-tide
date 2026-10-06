@@ -14,10 +14,37 @@ function lighting.clear()
   light_buffer:copy(DARK_MAX, true)
 end
 
+
+function lighting.light_tiles()
+  dtm.push_target(light_buffer)
+
+  local p_pos = p.pos * TILE_FACTOR
+  local cam_x = p_pos.x - CENTER_X
+  local cam_y = p_pos.y - CENTER_Y
+  camera(cam_x, cam_y)
+  map(lighting_tiles)
+  camera()
+  dtm.pop()
+end
+
+function lighting.light_vignette()
+  dtm.push_target(light_buffer)
+
+  circfill(CENTER_X, CENTER_Y, 80, 0x800000000 | COLORS.HARD_DARK)
+  fillp(0xa5a5)
+  circfill(CENTER_X, CENTER_Y, 70, 0x800000000 | COLORS.HARD_DARK)
+  fillp()
+  local p_pos = p.pos * TILE_FACTOR
+  local cam_x = p_pos.x - CENTER_X
+  local cam_y = p_pos.y - CENTER_Y
+  dtm.pop()
+end
+
 function lighting.light_rows(y, h)
   dtm.push_target(light_buffer)
   for i = DARK_N, 0, -1 do 
-    rrectfill(0, y + h * i, SCREEN_W, h,0, DARK_BASE + i)
+    local c1 = DARK_BASE + i
+    rrectfill(0, y + h * i, SCREEN_W, h,0, c1)
   end
   dtm.pop()
 end

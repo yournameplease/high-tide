@@ -103,9 +103,9 @@ function _draw()
 
   world:draw()
   
-  camera()
   lighting.clear()
-  lighting.light_rows(-y * TILE_H, TILE_H * 25)
+  lighting.light_tiles()
+  -- lighting.light_rows(-y * TILE_H, TILE_H * 25)
 
 
   if p.is_flashlight then
@@ -152,6 +152,7 @@ function _draw()
     lighting.light_spr(flashlight_s, light_start.x, light_start.y)
 
   end
+  lighting.light_vignette()
   -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 
