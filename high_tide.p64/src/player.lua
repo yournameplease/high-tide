@@ -12,14 +12,14 @@ local PLAYER_SCALE = 1
 -- TODO: consider bringing the super big strokes.  maybe slightly stronger than these but from an upgrade?
 -- local PLAYER_STROKE_VEL = 0.5
 -- local PLAYER_STROKE_TIME = 45
-local PLAYER_SHORT_STROKE_VEL = 0.04
-local PLAYER_SHORT_STROKE_TIME = 5
+local PLAYER_SHORT_STROKE_VEL = 0.02
+local PLAYER_SHORT_STROKE_TIME = 3
 
 -- local PLAYER_STROKE_VEL = PLAYER_SHORT_STROKE_VEL
 -- local PLAYER_STROKE_TIME = PLAYER_SHORT_STROKE_TIME
 -- feels like slightly faster than held, which is intended.
 -- does this inspire too annoying button mashing?
-local PLAYER_STROKE_VEL = 0.3
+local PLAYER_STROKE_VEL = 0.35
 local PLAYER_STROKE_TIME = 20
 
 PLAYER_BASE_AIR = 30 * 60
