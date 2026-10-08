@@ -46,7 +46,7 @@ function actor.new_bubble(pos)
 end
 
 -- just a full actor for particles... for now...
-function actor.new_particle(pos, vel, fric, lifespan)
+function actor.new_particle(pos, vel, fric, lifespan, color)
   local self = setmetatable({
     type = "particle",
     pos = pos,
@@ -55,7 +55,26 @@ function actor.new_particle(pos, vel, fric, lifespan)
     t = 0,
     lifespan = lifespan,
     is_solid = false,
+    color = color or COLORS.PARTICLE,
   }, Actor)
+
+  return self
+end
+
+-- just a full actor for particles... for now...
+function actor.shotgun_particles(pos, vel, fric, lifespan, count, spread, color)
+  for i = 1, count do
+    
+    -- TODO I'd rather these be emitted on a delay in sequence
+    local p = actor.new_particle(
+      pos,
+      vel + vec(rnd(2*spread)-spread, rnd(2*spread)-spread),
+      ACTOR_FRIC,
+      PARTICLE_LIFESPAN,
+      color
+    )
+    add(actors, p)
+  end
 
   return self
 end
@@ -117,7 +136,7 @@ function Actor:draw()
   local world_pos = self.pos * TILE_FACTOR
 
   if self.type == "particle" then
-    pset(world_pos.x, world_pos.y, COLORS.PARTICLE)      
+    pset(world_pos.x, world_pos.y, self.color)
     return
   end
   

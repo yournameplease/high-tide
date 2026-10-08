@@ -1,10 +1,14 @@
 local actor = require "src.actor"
 
+local PLAYER_PUSH_H = 0.8
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
+local PLAYER_LONG_STROKE_COOLDOWN = 40
 
-local BREATH_PARTICLE_SPEED = 0.02
+local PUSH_T = 90
+
+local BREATH_PARTICLE_SPEED = 0.05
 local PLAYER_SCALE = 1
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
@@ -19,8 +23,10 @@ local PLAYER_SHORT_STROKE_TIME = 3
 -- local PLAYER_STROKE_TIME = PLAYER_SHORT_STROKE_TIME
 -- feels like slightly faster than held, which is intended.
 -- does this inspire too annoying button mashing?
-local PLAYER_STROKE_VEL = 0.35
-local PLAYER_STROKE_TIME = 20
+-- local PLAYER_STROKE_VEL = 0.35
+-- local PLAYER_STROKE_TIME = 20
+local PLAYER_STROKE_VEL = 0.30
+local PLAYER_STROKE_TIME = 10
 
 PLAYER_BASE_AIR = 30 * 60
 PLAYER_AIR_BUBBLE_RESTORE = 10 * 60
@@ -57,6 +63,9 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field in_air_bubble boolean
 ---@field air_bubble_t integer
 ---@field is_flashlight boolean
+---@field hover_tile vec2
+---@field push_t integer
+---@field long_stroke_t integer
 ---@field heading_forward boolean true for forward, false for backward.  used for turning
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
@@ -68,7 +77,9 @@ function player.new(x, y, dir)
   local self = setmetatable({
     pos = vec(x, y),
     vel = vec(0, 0),
+    hover_tile = vec(0, 0),
     t = 0,
+    long_stroke_t = 0,
     stroke_t = 0,
     dir = dir,
     air = PLAYER_BASE_AIR,
@@ -87,6 +98,7 @@ function Player:update()
 
     local dx = 0
     local dy = 0
+    local target_dir
 
     if btnp(4) or btnp(5) then
       self.is_flashlight = not self.is_flashlight
@@ -108,11 +120,16 @@ function Player:update()
       self.stroke_held = false
     end
 
+    local target_angle
+    if dx ~= 0 or dy ~= 0 then
+      target_angle = atan2(dx, dy) % 1
+      target_dir = flr(4 * (target_angle + 1/8))
+    end
+
     if self.stroke_t <= 0 then
 
       if dx ~= 0 or dy ~= 0 then
         local new_dir
-        local target_angle = atan2(dx, dy) % 1
         target_angle = flr(8 * (target_angle + 1/16)) / 8
 
         local diff = target_angle - self.dir / 4
@@ -152,12 +169,13 @@ function Player:update()
       if any_move then
 
         local stroke_vel
-        if self.stroke_held then
+        if self.long_stroke_t > 0 or self.stroke_held then
           stroke_vel = PLAYER_SHORT_STROKE_VEL
           self.stroke_t = PLAYER_SHORT_STROKE_TIME
         else
           stroke_vel = PLAYER_STROKE_VEL
           self.stroke_t = PLAYER_STROKE_TIME
+          self.long_stroke_t = PLAYER_LONG_STROKE_COOLDOWN
         end
         
         self.stroke_held = true
@@ -169,10 +187,51 @@ function Player:update()
 
     self:move()
     self.t =  self.t + 1
+    self.long_stroke_t =  self.long_stroke_t - 1
 
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
   
+    do
+      local step = vec_rot(vec(PLAYER_PUSH_H, 0), self.dir/4)
+      local tile_pos = self.pos + step
+      tile_pos.x = flr(tile_pos.x)
+      tile_pos.y = flr(tile_pos.y)
+
+      if self.hover_tile.x ~= tile_pos.x or self.hover_tile.y ~= tile_pos.y then
+        self.push_t = PUSH_T
+        self.hover_tile = tile_pos
+      end
+
+      local tile = tiles:get(tile_pos.x, tile_pos.y)
+      if target_dir and self.dir == target_dir then 
+        if (fget(tile, 4) and self.dir == 0)
+          or (fget(tile, 5) and self.dir == 1)
+          or (fget(tile, 6) and self.dir == 2) then
+          self.push_t = self.push_t - 1
+
+          if self.push_t % 20 == 0 then
+            actor.shotgun_particles(
+              tile_pos + vec(0.5, 0.5),
+              0.05 * dir_to_vec((self.dir + 2) % 4),
+              ACTOR_FRIC,
+              PARTICLE_LIFESPAN,
+              5,
+              0.05,
+              COLORS.TERRAIN
+            )
+          end
+        end
+      else 
+        self.push_t = PUSH_T
+      end
+
+      if self.push_t == 0 then
+        world:break_tile(self.hover_tile)
+        self.push_t = PUSH_T
+      end
+    end
+
 
     do -- air bubbles
       local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
@@ -183,17 +242,14 @@ function Player:update()
 
           self.in_air_bubble = true
           a.should_die = true
-          for i = 1, 4 do
-            
-            -- TODO I'd rather these be emitted on a delay in sequence
-            local p = actor.new_particle(
-              head_pos,
-              vec(rnd(0.1)-0.05, -i * BREATH_PARTICLE_SPEED),
-              ACTOR_FRIC,
-              PARTICLE_LIFESPAN
-            )
-            add(actors, p)
-          end
+          actor.shotgun_particles(
+            head_pos + vec(0, -0.1),
+            vec(0, -BREATH_PARTICLE_SPEED),
+            ACTOR_FRIC,
+            PARTICLE_LIFESPAN,
+            4,
+            0.05
+          )
 
           break
         end 
@@ -365,11 +421,13 @@ function Player:draw()
   -- sspr(0x30000 | index, 0, 0, 16, 16, world_pos.x,  world_pos.y, 16 * PLAYER_SCALE, 16 * PLAYER_SCALE,  hflip, vflip)
 
   do -- debug points
-    -- for i, o in ipairs(PLAYER_ALL_POINTS) do
-    --   local step = vec_rot(o, self.dir/4)
-    --   local tile_pos = world_pos + step * TILE_FACTOR
-    --   pset(tile_pos.x, tile_pos.y, 8)
-    -- end
+    for i, o in ipairs(PLAYER_ALL_POINTS) do
+      local step = vec_rot(o, self.dir/4)
+      local tile_pos = world_pos + step * TILE_FACTOR
+      pset(tile_pos.x, tile_pos.y, 8)
+    end
+    --
+    pset((self.hover_tile.x + 0.5) * TILE_FACTOR.x, (self.hover_tile.y + 0.5) * TILE_FACTOR.y, 10)
   end
 end
 
