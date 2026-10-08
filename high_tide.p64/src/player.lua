@@ -4,6 +4,7 @@ local PLAYER_PUSH_H = 0.8
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
+local PLAYER_LONG_STROKE_COOLDOWN = 40
 
 local PUSH_T = 90
 
@@ -24,7 +25,7 @@ local PLAYER_SHORT_STROKE_TIME = 3
 -- does this inspire too annoying button mashing?
 -- local PLAYER_STROKE_VEL = 0.35
 -- local PLAYER_STROKE_TIME = 20
-local PLAYER_STROKE_VEL = 0.25
+local PLAYER_STROKE_VEL = 0.30
 local PLAYER_STROKE_TIME = 10
 
 PLAYER_BASE_AIR = 30 * 60
@@ -64,6 +65,7 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field is_flashlight boolean
 ---@field hover_tile vec2
 ---@field push_t integer
+---@field long_stroke_t integer
 ---@field heading_forward boolean true for forward, false for backward.  used for turning
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
@@ -77,6 +79,7 @@ function player.new(x, y, dir)
     vel = vec(0, 0),
     hover_tile = vec(0, 0),
     t = 0,
+    long_stroke_t = 0,
     stroke_t = 0,
     dir = dir,
     air = PLAYER_BASE_AIR,
@@ -166,12 +169,13 @@ function Player:update()
       if any_move then
 
         local stroke_vel
-        if self.stroke_held then
+        if self.long_stroke_t > 0 or self.stroke_held then
           stroke_vel = PLAYER_SHORT_STROKE_VEL
           self.stroke_t = PLAYER_SHORT_STROKE_TIME
         else
           stroke_vel = PLAYER_STROKE_VEL
           self.stroke_t = PLAYER_STROKE_TIME
+          self.long_stroke_t = PLAYER_LONG_STROKE_COOLDOWN
         end
         
         self.stroke_held = true
@@ -183,6 +187,7 @@ function Player:update()
 
     self:move()
     self.t =  self.t + 1
+    self.long_stroke_t =  self.long_stroke_t - 1
 
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
