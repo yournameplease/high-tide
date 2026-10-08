@@ -79,5 +79,8 @@ function World:draw()
   camera()
 end
 
+function World:break_tile(pos)
+  self.tiles:set(pos.x, pos.y, 0)
+end
 
 return world

@@ -177,6 +177,8 @@ function _draw()
   print(stat(1))
   print("AIR: "..p.air // 60)
   print("BATTERY: "..p.battery // 60)
+  print("PUSH: "..p.hover_tile.x .. ","..p.hover_tile.y)
+  print("PUSH: "..p.push_t)
 end
  
 function _update()

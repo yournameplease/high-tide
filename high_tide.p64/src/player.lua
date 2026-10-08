@@ -1,8 +1,11 @@
 local actor = require "src.actor"
 
+local PLAYER_PUSH_H = 0.8
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
+
+local PUSH_T = 90
 
 local BREATH_PARTICLE_SPEED = 0.02
 local PLAYER_SCALE = 1
@@ -57,6 +60,8 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field in_air_bubble boolean
 ---@field air_bubble_t integer
 ---@field is_flashlight boolean
+---@field hover_tile vec2
+---@field push_t integer
 ---@field heading_forward boolean true for forward, false for backward.  used for turning
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
@@ -68,6 +73,7 @@ function player.new(x, y, dir)
   local self = setmetatable({
     pos = vec(x, y),
     vel = vec(0, 0),
+    hover_tile = vec(0, 0),
     t = 0,
     stroke_t = 0,
     dir = dir,
@@ -87,6 +93,7 @@ function Player:update()
 
     local dx = 0
     local dy = 0
+    local target_dir
 
     if btnp(4) or btnp(5) then
       self.is_flashlight = not self.is_flashlight
@@ -108,11 +115,12 @@ function Player:update()
       self.stroke_held = false
     end
 
+    local target_angle = atan2(dx, dy) % 1
+    target_dir = flr(4 * (target_angle + 1/8)) / 4
     if self.stroke_t <= 0 then
 
       if dx ~= 0 or dy ~= 0 then
         local new_dir
-        local target_angle = atan2(dx, dy) % 1
         target_angle = flr(8 * (target_angle + 1/16)) / 8
 
         local diff = target_angle - self.dir / 4
@@ -173,6 +181,32 @@ function Player:update()
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
   
+    do
+      local step = vec_rot(vec(PLAYER_PUSH_H, 0), self.dir/4)
+      local tile_pos = self.pos + step
+      tile_pos.x = flr(tile_pos.x)
+      tile_pos.y = flr(tile_pos.y)
+
+      if self.hover_tile.x ~= tile_pos.x or self.hover_tile.y ~= tile_pos.y then
+        self.push_t = PUSH_T
+        self.hover_tile = tile_pos
+      end
+
+      local tile = tiles:get(tile_pos.x, tile_pos.y)
+      if target_dir and self.dir == target_dir then 
+        if fget(tile, 4) or fget(tile, 5) or fget(tile, 6) then
+          self.push_t = self.push_t - 1
+        end
+      else 
+        self.push_t = PUSH_T
+      end
+
+      if self.push_t == 0 then
+        world:break_tile(self.hover_tile)
+        self.push_t = PUSH_T
+      end
+    end
+
 
     do -- air bubbles
       local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
