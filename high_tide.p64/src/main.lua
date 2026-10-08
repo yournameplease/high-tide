@@ -61,6 +61,10 @@ actors = {}
 tiles = {}
 
 
+--- global flags and such
+IS_HELMET = false
+IS_PUSH_ALLOWED = false
+
 function apply_color_table(color_table_sprite, idx)
   idx = idx or 0
 	local sprite=get_spr(color_table_sprite)

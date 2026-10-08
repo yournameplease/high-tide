@@ -8,6 +8,8 @@ local PLAYER_LONG_STROKE_COOLDOWN = 40
 
 local PUSH_T = 90
 
+local PLAYER_DRAW_OFFSET = vec(-2, 0)
+
 local BREATH_PARTICLE_SPEED = 0.05
 local PLAYER_SCALE = 1
 -- local PLAYER_STROKE_VEL = 0.2
@@ -28,11 +30,16 @@ local PLAYER_SHORT_STROKE_TIME = 3
 local PLAYER_STROKE_VEL = 0.30
 local PLAYER_STROKE_TIME = 10
 
-PLAYER_BASE_AIR = 30 * 60
+PLAYER_BASE_AIR = 15 * 60
+PLAYER_HELMET_AIR = 30 * 60
 PLAYER_AIR_BUBBLE_RESTORE = 10 * 60
 PLAYER_AIR_BUBBLE_TIME = 1 * 60
 PLAYER_BASE_BATTERY = 15 * 60
 BATTERY_WEAK_DURATION = 2 * 60
+
+function BASE_AIR()
+  return IS_HELMET and PLAYER_HELMET_AIR or PLAYER_BASE_AIR
+end
 
 local PLAYER_FEET_POINTS = {
   vec(-PLAYER_HALF_H, -PLAYER_HALF_W), 
@@ -82,7 +89,7 @@ function player.new(x, y, dir)
     long_stroke_t = 0,
     stroke_t = 0,
     dir = dir,
-    air = PLAYER_BASE_AIR,
+    air = BASE_AIR(),
     is_flashlight = false,
     battery = PLAYER_BASE_BATTERY,
     held_stroke = false,
@@ -258,9 +265,9 @@ function Player:update()
 
     if self.air_bubble_t > 0 then
       self.air_bubble_t = self.air_bubble_t - 1
-      self.air = self.air + PLAYER_BASE_AIR * 0.01
+      self.air = self.air + BASE_AIR() * 0.01
     elseif self.in_air_tile then
-      self.air = self.air + PLAYER_BASE_AIR * 0.01
+      self.air = self.air + BASE_AIR() * 0.01
       -- consider restricting this to "sun" tiles?
       self.battery = PLAYER_BASE_BATTERY
     elseif self.in_air_bubble and not self.is_air_bubbling then
@@ -269,7 +276,7 @@ function Player:update()
     else
       self.air = self.air - 1
     end
-    self.air = min(self.air, PLAYER_BASE_AIR)
+    self.air = min(self.air, BASE_AIR())
 end
 
 function Player:is_collision(pos, dir)
@@ -412,14 +419,22 @@ function Player:draw()
       index = index + 2 + (self.t // 16) % 2
     end
   end
+  if not IS_HELMET then
+    index = index + 8
+  end
 
   if self.dir == 1 or self.dir == 3 then index = index + 4 end
   if self.dir == 2 then hflip = true end
   if self.dir == 3 then vflip = true end
-  local world_pos = self.pos * TILE_FACTOR
+  local offset = vec_rot(PLAYER_DRAW_OFFSET, self.dir/4)
+
+  local world_pos = self.pos * TILE_FACTOR + offset
+
+
   spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
   -- sspr(0x30000 | index, 0, 0, 16, 16, world_pos.x,  world_pos.y, 16 * PLAYER_SCALE, 16 * PLAYER_SCALE,  hflip, vflip)
 
+  
   do -- debug points
     for i, o in ipairs(PLAYER_ALL_POINTS) do
       local step = vec_rot(o, self.dir/4)
