@@ -179,6 +179,7 @@ function _draw()
   print("BATTERY: "..p.battery // 60)
   print("PUSH: "..p.hover_tile.x .. ","..p.hover_tile.y)
   print("PUSH: "..p.push_t)
+  print("PUSH: "..p.dir)
 end
  
 function _update()

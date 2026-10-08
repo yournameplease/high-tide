@@ -115,8 +115,12 @@ function Player:update()
       self.stroke_held = false
     end
 
-    local target_angle = atan2(dx, dy) % 1
-    target_dir = flr(4 * (target_angle + 1/8)) / 4
+    local target_angle
+    if dx ~= 0 or dy ~= 0 then
+      target_angle = atan2(dx, dy) % 1
+      target_dir = flr(4 * (target_angle + 1/8))
+    end
+
     if self.stroke_t <= 0 then
 
       if dx ~= 0 or dy ~= 0 then
@@ -194,7 +198,9 @@ function Player:update()
 
       local tile = tiles:get(tile_pos.x, tile_pos.y)
       if target_dir and self.dir == target_dir then 
-        if fget(tile, 4) or fget(tile, 5) or fget(tile, 6) then
+        if (fget(tile, 4) and self.dir == 0)
+          or (fget(tile, 5) and self.dir == 1)
+          or (fget(tile, 6) and self.dir == 2) then
           self.push_t = self.push_t - 1
         end
       else 
@@ -404,6 +410,8 @@ function Player:draw()
     --   local tile_pos = world_pos + step * TILE_FACTOR
     --   pset(tile_pos.x, tile_pos.y, 8)
     -- end
+    --
+    pset((self.hover_tile.x + 0.5) * TILE_FACTOR.x, (self.hover_tile.y + 0.5) * TILE_FACTOR.y, 8)
   end
 end
 
