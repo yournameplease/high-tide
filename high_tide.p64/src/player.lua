@@ -7,7 +7,7 @@ local PLAYER_FRIC = 0.95
 
 local PUSH_T = 90
 
-local BREATH_PARTICLE_SPEED = 0.02
+local BREATH_PARTICLE_SPEED = 0.05
 local PLAYER_SCALE = 1
 -- local PLAYER_STROKE_VEL = 0.2
 -- local PLAYER_STROKE_TIME = 25
@@ -22,8 +22,10 @@ local PLAYER_SHORT_STROKE_TIME = 3
 -- local PLAYER_STROKE_TIME = PLAYER_SHORT_STROKE_TIME
 -- feels like slightly faster than held, which is intended.
 -- does this inspire too annoying button mashing?
-local PLAYER_STROKE_VEL = 0.35
-local PLAYER_STROKE_TIME = 20
+-- local PLAYER_STROKE_VEL = 0.35
+-- local PLAYER_STROKE_TIME = 20
+local PLAYER_STROKE_VEL = 0.25
+local PLAYER_STROKE_TIME = 10
 
 PLAYER_BASE_AIR = 30 * 60
 PLAYER_AIR_BUBBLE_RESTORE = 10 * 60
@@ -202,6 +204,18 @@ function Player:update()
           or (fget(tile, 5) and self.dir == 1)
           or (fget(tile, 6) and self.dir == 2) then
           self.push_t = self.push_t - 1
+
+          if self.push_t % 20 == 0 then
+            actor.shotgun_particles(
+              tile_pos + vec(0.5, 0.5),
+              0.05 * dir_to_vec((self.dir + 2) % 4),
+              ACTOR_FRIC,
+              PARTICLE_LIFESPAN,
+              5,
+              0.05,
+              COLORS.TERRAIN
+            )
+          end
         end
       else 
         self.push_t = PUSH_T
@@ -223,17 +237,14 @@ function Player:update()
 
           self.in_air_bubble = true
           a.should_die = true
-          for i = 1, 4 do
-            
-            -- TODO I'd rather these be emitted on a delay in sequence
-            local p = actor.new_particle(
-              head_pos,
-              vec(rnd(0.1)-0.05, -i * BREATH_PARTICLE_SPEED),
-              ACTOR_FRIC,
-              PARTICLE_LIFESPAN
-            )
-            add(actors, p)
-          end
+          actor.shotgun_particles(
+            head_pos + vec(0, -0.1),
+            vec(0, -BREATH_PARTICLE_SPEED),
+            ACTOR_FRIC,
+            PARTICLE_LIFESPAN,
+            4,
+            0.05
+          )
 
           break
         end 
@@ -405,13 +416,13 @@ function Player:draw()
   -- sspr(0x30000 | index, 0, 0, 16, 16, world_pos.x,  world_pos.y, 16 * PLAYER_SCALE, 16 * PLAYER_SCALE,  hflip, vflip)
 
   do -- debug points
-    -- for i, o in ipairs(PLAYER_ALL_POINTS) do
-    --   local step = vec_rot(o, self.dir/4)
-    --   local tile_pos = world_pos + step * TILE_FACTOR
-    --   pset(tile_pos.x, tile_pos.y, 8)
-    -- end
+    for i, o in ipairs(PLAYER_ALL_POINTS) do
+      local step = vec_rot(o, self.dir/4)
+      local tile_pos = world_pos + step * TILE_FACTOR
+      pset(tile_pos.x, tile_pos.y, 8)
+    end
     --
-    pset((self.hover_tile.x + 0.5) * TILE_FACTOR.x, (self.hover_tile.y + 0.5) * TILE_FACTOR.y, 8)
+    pset((self.hover_tile.x + 0.5) * TILE_FACTOR.x, (self.hover_tile.y + 0.5) * TILE_FACTOR.y, 10)
   end
 end
 
