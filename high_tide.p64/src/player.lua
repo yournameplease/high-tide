@@ -1,5 +1,7 @@
 local actor = require "src.actor"
 
+local DEBUG_HITBOX = false
+
 local PLAYER_PUSH_H = 0.8
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
@@ -214,7 +216,9 @@ function Player:update()
       if target_dir and self.dir == target_dir then 
         if (fget(tile, 4) and self.dir == 0)
           or (fget(tile, 5) and self.dir == 1)
-          or (fget(tile, 6) and self.dir == 2) then
+          or (fget(tile, 6) and self.dir == 2)
+          or (fget(tile, 7) and self.dir == 3)
+        then
           self.push_t = self.push_t - 1
 
           if self.push_t % 20 == 0 then
@@ -435,7 +439,7 @@ function Player:draw()
   -- sspr(0x30000 | index, 0, 0, 16, 16, world_pos.x,  world_pos.y, 16 * PLAYER_SCALE, 16 * PLAYER_SCALE,  hflip, vflip)
 
   
-  do -- debug points
+  if DEBUG_HITBOX then
     for i, o in ipairs(PLAYER_ALL_POINTS) do
       local step = vec_rot(o, self.dir/4)
       local tile_pos = world_pos + step * TILE_FACTOR

@@ -82,7 +82,7 @@ function _init()
   colors.build_color_palette()
   
   world = world_mod.new("map/shallows.map")
-  p = player_mod.new(10, 4, 0)
+  p = player_mod.new(10, 9, 0)
 
 
   for x = 0, tiles:width() - 1 do
@@ -115,7 +115,7 @@ function _draw()
   lighting.light_vignette()
   if p.is_flashlight then
 
-    local air_light_factor = 2 * mid(0.1, p.air / PLAYER_BASE_AIR, 0.5)
+    local air_light_factor = 2 * mid(0.1, p.air / BASE_AIR(), 0.5)
     local flashlight_step = max(PLAYER_LIGHT_STEP_MAX - y / PLAYER_LIGHT_STEP_FACTOR, PLAYER_LIGHT_STEP_MIN)
     local player_light_offset = PLAYER_LIGHT_MIN + PLAYER_LIGHT_AMP * math.sin(global_t / PLAYER_LIGHT_FREQ)
     local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
@@ -178,8 +178,8 @@ function _draw()
   -- end
 
   color(7)
-  print(stat(1))
-  print("AIR: "..p.air // 60)
+  -- print(stat(1))
+  -- print("AIR: "..p.air // 60)
   print("BATTERY: "..p.battery // 60)
 end
  
