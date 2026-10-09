@@ -8,6 +8,8 @@ local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
 local PLAYER_LONG_STROKE_COOLDOWN = 40
 
+local RESPAWN_T = 120
+
 local PUSH_T = 90
 
 local PLAYER_DRAW_OFFSET = vec(-2, 0)
@@ -76,6 +78,8 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field push_t integer
 ---@field long_stroke_t integer
 ---@field heading_forward boolean true for forward, false for backward.  used for turning
+---@field respawn_point vec2
+---@field respawn_t integer
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
 Player.__index = Player
@@ -96,10 +100,17 @@ function player.new(x, y, dir)
     battery = PLAYER_BASE_BATTERY,
     held_stroke = false,
     heading_forward = true,
+    respawn_point = vec(x, y),
+    respawn_t = 0,
     air_bubble_t = 0,
   }, Player)
 
   return self
+end
+
+function Player:respawn()
+  self.pos = self.respawn_point:copy()
+  self.respawn_t = RESPAWN_T
 end
 
 function Player:update()
@@ -109,7 +120,13 @@ function Player:update()
     local dy = 0
     local target_dir
 
-    if btnp(4) or btnp(5) then
+    local allow_input = true
+    if self.respawn_t > 0 then
+      self.respawn_t = self.respawn_t - 1
+      allow_input = false
+    end
+    
+    if allow_input and (btnp(4) or btnp(5)) then
       self.is_flashlight = not self.is_flashlight
 
       if self.battery < 0 then self.battery = BATTERY_WEAK_DURATION end
@@ -120,10 +137,12 @@ function Player:update()
       if self.battery < 0 then self.is_flashlight = false end
     end
     
-    if (btn(0))then any_move = true dx = dx - 1 end
-    if (btn(1))then any_move = true dx = dx + 1 end
-    if (btn(2))then any_move = true dy = dy - 1 end
-    if (btn(3))then any_move = true dy = dy + 1 end
+    if allow_input then
+      if (btn(0))then any_move = true dx = dx - 1 end
+      if (btn(1))then any_move = true dx = dx + 1 end
+      if (btn(2))then any_move = true dy = dy - 1 end
+      if (btn(3))then any_move = true dy = dy + 1 end
+    end
 
     if not any_move then
       self.stroke_held = false
@@ -271,16 +290,26 @@ function Player:update()
       self.air_bubble_t = self.air_bubble_t - 1
       self.air = self.air + BASE_AIR() * 0.01
     elseif self.in_air_tile then
+      self.respawn_point = self.pos
+    
       self.air = self.air + BASE_AIR() * 0.01
       -- consider restricting this to "sun" tiles?
       self.battery = PLAYER_BASE_BATTERY
     elseif self.in_air_bubble and not self.is_air_bubbling then
       self.in_air_bubble = false
       self.air_bubble_t = PLAYER_AIR_BUBBLE_TIME
+    elseif self.respawn_t > 0 then
+      self.air = self.air + BASE_AIR() * 0.01
     else
       self.air = self.air - 1
     end
+
+    
     self.air = min(self.air, BASE_AIR())
+
+    if self.air < 0 then
+      self:respawn()
+    end
 end
 
 function Player:is_collision(pos, dir)
