@@ -42,7 +42,7 @@ PLAYER_BASE_BATTERY = 15 * 60
 BATTERY_WEAK_DURATION = 2 * 60
 
 function BASE_AIR()
-  return IS_HELMET and PLAYER_HELMET_AIR or PLAYER_BASE_AIR
+  return FLAGS.IS_HELMET and PLAYER_HELMET_AIR or PLAYER_BASE_AIR
 end
 
 local PLAYER_FEET_POINTS = {
@@ -220,7 +220,7 @@ function Player:update()
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
   
-    do
+    if FLAGS.IS_DIG_ALLOWED then
       local step = vec_rot(vec(PLAYER_PUSH_H, 0), self.dir/4)
       local tile_pos = self.pos + step
       tile_pos.x = flr(tile_pos.x)
@@ -452,7 +452,7 @@ function Player:draw()
       index = index + 2 + (self.t // 16) % 2
     end
   end
-  if not IS_HELMET then
+  if not FLAGS.IS_HELMET then
     index = index + 8
   end
 
