@@ -111,9 +111,16 @@ end
 function Player:respawn()
   self.pos = self.respawn_point:copy()
   self.respawn_t = RESPAWN_T
+  self.is_flashlight = false
 end
 
 function Player:update()
+    if DEBUG_MODE then
+      if btnp(12) then
+        self.air = BASE_AIR() * 99
+      end
+    end
+  
     local any_move = false
 
     local dx = 0
@@ -219,6 +226,16 @@ function Player:update()
 
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
+
+    -- pickups
+    do
+        local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
+        local tile_pos = self.pos + step
+        local tile = tiles:get(tile_pos.x, tile_pos.y)
+        if fget(tile, 3) then
+          pickup_tile(tile_pos)
+        end
+    end
   
     if FLAGS.IS_DIG_ALLOWED then
       local step = vec_rot(vec(PLAYER_PUSH_H, 0), self.dir/4)
@@ -305,7 +322,9 @@ function Player:update()
     end
 
     
-    self.air = min(self.air, BASE_AIR())
+    if not DEBUG_MODE then
+      self.air = min(self.air, BASE_AIR())
+    end
 
     if self.air < 0 then
       self:respawn()

@@ -2,6 +2,8 @@
 -- SCREEN_W = 480 / 2
 -- SCREEN_H = 270 / 2
 
+DEBUG_MODE = true
+
 VID = 4
 SCREEN_W = 480 / 3
 SCREEN_H = 270 / 3
@@ -12,7 +14,12 @@ TILE_W = 16 / 2
 TILE_H = 16 / 2
 TILE_FACTOR = vec(TILE_W, TILE_H)
 
+MESSAGE_H = 12
+MESSAGE_Y = SCREEN_H - MESSAGE_H
+MESSAGE_TIME = 3 * 60
+
 require "src.math"
+require "src.util"
 require "src.util.log"
 ---@alias vec2 userdata
 
@@ -60,11 +67,18 @@ p = {}
 actors = {}
 tiles = {}
 
+---@class Messages
+---@field t integer
+---@field strings string[]
+messages = {}
+
 
 --- global flags and such
 FLAGS = {
   IS_HELMET = false,
+  IS_FLASHLIGHT = false,
   IS_DIG_ALLOWED = false,
+  TABLET_COUNT = 0,
 }
 
 function apply_color_table(color_table_sprite, idx)
@@ -79,6 +93,40 @@ function apply_color_table(color_table_sprite, idx)
 	--that pal() modifies.
 end
 
+---@param m string[]
+function push_messages(m)
+  for _,s in ipairs(m) do
+    add(messages.strings, s)
+  end
+
+  if messages.t <= 0 then
+    messages.t = MESSAGE_TIME
+  end
+end
+
+function pickup_tile(pos)
+  local t = world.tiles:get(pos.x, pos.y)
+
+  if t == 28 then
+    FLAGS.IS_FLASHLIGHT = true
+    push_messages({"Found a flashlight!", "Press Z to toggle."})
+  elseif t == 29 then
+    FLAGS.IS_HELMET = true
+    p.air = p.air * PLAYER_HELMET_AIR / PLAYER_BASE_AIR
+    p.respawn_t = 60 -- forces to stop and regain air
+    push_messages({"Found a helmet!", "Breathe for longer underwater."})
+  elseif t == 30 then
+    FLAGS.IS_DIG_ALLOWED = true
+    push_messages({"Found a shovel!", "Push walls to dig."})
+  elseif t == 31 then
+    FLAGS.TABLET_COUNT = FLAGS.TABLET_COUNT + 1
+    push_messages({"Found a tablet!", "1 / ???"})
+  else
+    log.warn("Tried to pickup invalid tile", t)
+  end
+
+  world.tiles:set(pos.x, pos.y, 0)
+end
 
 function _init()
   colors.build_color_palette()
@@ -99,6 +147,11 @@ function _init()
   
   screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
 
+  messages = {
+    strings = {},
+    t = 0,
+  }
+  
   vid(VID)
 end
 
@@ -175,9 +228,14 @@ function _draw()
   cls()
   spr(screen_buffer, 0, 0)
 
-  -- for i = 1, 9 do
-  --   circfill(100 + 20 * i, 20 * i, 10, COLORS.DARK[i])
-  -- end
+  --- messages
+  if #messages.strings > 0 then
+    rrectfill(0, MESSAGE_Y, SCREEN_W, MESSAGE_H, 0, 32)
+
+    local w, h = measure_string(messages.strings[1])
+
+    print(messages.strings[1], CENTER_X - w / 2, MESSAGE_Y + 2, COLORS.TEXT)
+  end
 
   color(7)
   -- print(stat(1))
@@ -201,4 +259,14 @@ function _update()
     end
   end
   p:update()
+
+  if messages.t > 0 then
+    messages.t = messages.t - 1
+    if messages.t <= 0 then
+      deli(messages.strings, 1)
+      if #messages.strings > 0 then
+        messages.t = MESSAGE_TIME
+      end
+    end
+  end
 end

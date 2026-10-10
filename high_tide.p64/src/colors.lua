@@ -47,6 +47,7 @@ COLORS = {
   TERRAIN = 49,
   PARTICLE = 50,
   ENTITY = 50,
+  TEXT = 50,
 }
 
 for i = 1, 10 do
