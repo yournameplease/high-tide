@@ -2,7 +2,7 @@
 -- SCREEN_W = 480 / 2
 -- SCREEN_H = 270 / 2
 
-DEBUG_MODE = true
+DEBUG_MODE = false
 
 VID = 4
 SCREEN_W = 480 / 3
@@ -170,34 +170,9 @@ function _draw()
   lighting.light_vignette()
   if p.is_flashlight then
 
-    local air_light_factor = 2 * mid(0.1, p.air / BASE_AIR(), 0.5)
-    local flashlight_step = max(PLAYER_LIGHT_STEP_MAX - y / PLAYER_LIGHT_STEP_FACTOR, PLAYER_LIGHT_STEP_MIN)
-    local player_light_offset = PLAYER_LIGHT_MIN + PLAYER_LIGHT_AMP * math.sin(global_t / PLAYER_LIGHT_FREQ)
-    local flashlight_offset = FLASHLIGHT_AMP * math.sin(global_t / FLASHLIGHT_FREQ)
-    -- lighting.light_disks(CENTER_X, CENTER_Y,
-    --   player_light_offset, flashlight_step * air_light_factor)
-
-    local lightness = 0
-    if p.battery < 3 * 60 then
-      lightness = 1
-    end
-
-    local factor = 1
-    if p.battery < 50 then
-      factor = p.battery / 50
-    end
-
     
     local dir_vec = dir_to_vec(p.dir)
     local light_start = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_START
-    local light_end = vec(CENTER_X, CENTER_Y) + dir_vec * FLASHLIGHT_END
-    -- lighting.light_cone(
-    --   light_start.x, light_start.y, (FLASHLIGHT_MIN_R) * factor,
-    --   light_end.x, light_end.y, (FLASHLIGHT_MAX_R+flashlight_offset) * factor,
-    --   FLASHLIGHT_STEPS,
-    --   lightness
-    -- )
-    --
      
     local flashlight_s = 32 + p.dir
     if p.dir == 0 then
@@ -212,7 +187,6 @@ function _draw()
     lighting.light_spr(flashlight_s, light_start.x, light_start.y)
 
   end
-  -- lighting.light_rows(100, 30)
   lighting.draw_lighting()
 
   dtm.pop()
