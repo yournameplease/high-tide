@@ -245,7 +245,10 @@ function Player:update()
       tile_pos.y = flr(tile_pos.y)
 
       if self.hover_tile.x ~= tile_pos.x or self.hover_tile.y ~= tile_pos.y then
-        self.push_t = PUSH_T
+        -- if same type, keep push time
+        if fget(tiles:get(tile_pos.x, tile_pos.y)) ~= fget(tiles:get(self.hover_tile.x, self.hover_tile.y)) then
+          self.push_t = PUSH_T
+        end
         self.hover_tile = tile_pos
       end
 
