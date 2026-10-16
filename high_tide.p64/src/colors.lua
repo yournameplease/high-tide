@@ -48,6 +48,8 @@ COLORS = {
   PARTICLE = 50,
   ENTITY = 50,
   TEXT = 50,
+  TRANSPARENT_BREAKABLE = 24,
+  TRANSPARENT_FALSE_WALL = 29,
 }
 
 for i = 1, 10 do
@@ -100,6 +102,11 @@ function colors.build_color_palette()
   for i = 0, 63 do
     -- transparent with respect to base palette
     colortable:set(i, COLORS.HARD_DARK, COLORS.DARK[#COLORS.DARK])
+
+
+    -- transparent colors for editor clarity
+    colortable:set(i, COLORS.TRANSPARENT_BREAKABLE, i)
+    colortable:set(i, COLORS.TRANSPARENT_FALSE_WALL, i)
   end
 
   colortable:poke(0x8000)
