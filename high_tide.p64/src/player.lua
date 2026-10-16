@@ -1,12 +1,18 @@
 local actor = require "src.actor"
 
+local DEBUG_HITBOX = false
+
 local PLAYER_PUSH_H = 0.8
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
 local PLAYER_FRIC = 0.95
 local PLAYER_LONG_STROKE_COOLDOWN = 40
 
+local RESPAWN_T = 120
+
 local PUSH_T = 90
+
+local PLAYER_DRAW_OFFSET = vec(-2, 0)
 
 local BREATH_PARTICLE_SPEED = 0.05
 local PLAYER_SCALE = 1
@@ -28,11 +34,17 @@ local PLAYER_SHORT_STROKE_TIME = 3
 local PLAYER_STROKE_VEL = 0.30
 local PLAYER_STROKE_TIME = 10
 
-PLAYER_BASE_AIR = 30 * 60
+PLAYER_AIR_DELAY = 1 * 60
+PLAYER_BASE_AIR = 15 * 60
+PLAYER_HELMET_AIR = 30 * 60
 PLAYER_AIR_BUBBLE_RESTORE = 10 * 60
 PLAYER_AIR_BUBBLE_TIME = 1 * 60
 PLAYER_BASE_BATTERY = 15 * 60
 BATTERY_WEAK_DURATION = 2 * 60
+
+function BASE_AIR()
+  return FLAGS.IS_HELMET and PLAYER_HELMET_AIR or PLAYER_BASE_AIR
+end
 
 local PLAYER_FEET_POINTS = {
   vec(-PLAYER_HALF_H, -PLAYER_HALF_W), 
@@ -67,6 +79,8 @@ for _,p in ipairs(PLAYER_HEAD_POINTS) do add(PLAYER_ALL_POINTS, p) end
 ---@field push_t integer
 ---@field long_stroke_t integer
 ---@field heading_forward boolean true for forward, false for backward.  used for turning
+---@field respawn_point vec2
+---@field respawn_t integer
 ---@field stroke_held boolean false if ever not pressing a direction, reset to true on stroke
 local Player = {}
 Player.__index = Player
@@ -82,25 +96,45 @@ function player.new(x, y, dir)
     long_stroke_t = 0,
     stroke_t = 0,
     dir = dir,
-    air = PLAYER_BASE_AIR,
+    air = BASE_AIR(),
     is_flashlight = false,
     battery = PLAYER_BASE_BATTERY,
     held_stroke = false,
     heading_forward = true,
+    respawn_point = vec(x, y),
+    respawn_t = 0,
     air_bubble_t = 0,
   }, Player)
 
   return self
 end
 
+function Player:respawn()
+  self.pos = self.respawn_point:copy()
+  self.respawn_t = RESPAWN_T
+  self.is_flashlight = false
+end
+
 function Player:update()
+    if DEBUG_MODE then
+      if btnp(12) then
+        self.air = BASE_AIR() * 99
+      end
+    end
+  
     local any_move = false
 
     local dx = 0
     local dy = 0
     local target_dir
 
-    if btnp(4) or btnp(5) then
+    local allow_input = true
+    if self.respawn_t > 0 then
+      self.respawn_t = self.respawn_t - 1
+      allow_input = false
+    end
+    
+    if allow_input and (btnp(4) or btnp(5)) then
       self.is_flashlight = not self.is_flashlight
 
       if self.battery < 0 then self.battery = BATTERY_WEAK_DURATION end
@@ -111,10 +145,12 @@ function Player:update()
       if self.battery < 0 then self.is_flashlight = false end
     end
     
-    if (btn(0))then any_move = true dx = dx - 1 end
-    if (btn(1))then any_move = true dx = dx + 1 end
-    if (btn(2))then any_move = true dy = dy - 1 end
-    if (btn(3))then any_move = true dy = dy + 1 end
+    if allow_input then
+      if (btn(0))then any_move = true dx = dx - 1 end
+      if (btn(1))then any_move = true dx = dx + 1 end
+      if (btn(2))then any_move = true dy = dy - 1 end
+      if (btn(3))then any_move = true dy = dy + 1 end
+    end
 
     if not any_move then
       self.stroke_held = false
@@ -191,15 +227,28 @@ function Player:update()
 
     self.vel = self.vel + world.water_vel
     self.vel = self.vel * PLAYER_FRIC
-  
+
+    -- pickups
     do
+        local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
+        local tile_pos = self.pos + step
+        local tile = tiles:get(tile_pos.x, tile_pos.y)
+        if fget(tile, 3) then
+          pickup_tile(tile_pos)
+        end
+    end
+  
+    if FLAGS.IS_DIG_ALLOWED then
       local step = vec_rot(vec(PLAYER_PUSH_H, 0), self.dir/4)
       local tile_pos = self.pos + step
       tile_pos.x = flr(tile_pos.x)
       tile_pos.y = flr(tile_pos.y)
 
       if self.hover_tile.x ~= tile_pos.x or self.hover_tile.y ~= tile_pos.y then
-        self.push_t = PUSH_T
+        -- if same type, keep push time
+        if fget(tiles:get(tile_pos.x, tile_pos.y)) ~= fget(tiles:get(self.hover_tile.x, self.hover_tile.y)) then
+          self.push_t = PUSH_T
+        end
         self.hover_tile = tile_pos
       end
 
@@ -207,7 +256,9 @@ function Player:update()
       if target_dir and self.dir == target_dir then 
         if (fget(tile, 4) and self.dir == 0)
           or (fget(tile, 5) and self.dir == 1)
-          or (fget(tile, 6) and self.dir == 2) then
+          or (fget(tile, 6) and self.dir == 2)
+          or (fget(tile, 7) and self.dir == 3)
+        then
           self.push_t = self.push_t - 1
 
           if self.push_t % 20 == 0 then
@@ -258,18 +309,30 @@ function Player:update()
 
     if self.air_bubble_t > 0 then
       self.air_bubble_t = self.air_bubble_t - 1
-      self.air = self.air + PLAYER_BASE_AIR * 0.01
+      self.air = self.air + BASE_AIR() * 0.01
     elseif self.in_air_tile then
-      self.air = self.air + PLAYER_BASE_AIR * 0.01
+      self.respawn_point = self.pos
+    
+      self.air = self.air + BASE_AIR() * 0.01
       -- consider restricting this to "sun" tiles?
       self.battery = PLAYER_BASE_BATTERY
     elseif self.in_air_bubble and not self.is_air_bubbling then
       self.in_air_bubble = false
       self.air_bubble_t = PLAYER_AIR_BUBBLE_TIME
+    elseif self.respawn_t > 0 then
+      self.air = self.air + BASE_AIR() * 0.01
     else
       self.air = self.air - 1
     end
-    self.air = min(self.air, PLAYER_BASE_AIR)
+
+    
+    if not DEBUG_MODE then
+      self.air = min(self.air, BASE_AIR())
+    end
+
+    if self.air < 0 then
+      self:respawn()
+    end
 end
 
 function Player:is_collision(pos, dir)
@@ -412,15 +475,23 @@ function Player:draw()
       index = index + 2 + (self.t // 16) % 2
     end
   end
+  if not FLAGS.IS_HELMET then
+    index = index + 8
+  end
 
   if self.dir == 1 or self.dir == 3 then index = index + 4 end
   if self.dir == 2 then hflip = true end
   if self.dir == 3 then vflip = true end
-  local world_pos = self.pos * TILE_FACTOR
+  local offset = vec_rot(PLAYER_DRAW_OFFSET, self.dir/4)
+
+  local world_pos = self.pos * TILE_FACTOR + offset
+
+
   spr(0x30000 | index, world_pos.x,  world_pos.y,  hflip, vflip)
   -- sspr(0x30000 | index, 0, 0, 16, 16, world_pos.x,  world_pos.y, 16 * PLAYER_SCALE, 16 * PLAYER_SCALE,  hflip, vflip)
 
-  do -- debug points
+  
+  if DEBUG_HITBOX then
     for i, o in ipairs(PLAYER_ALL_POINTS) do
       local step = vec_rot(o, self.dir/4)
       local tile_pos = world_pos + step * TILE_FACTOR

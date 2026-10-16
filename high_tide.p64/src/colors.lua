@@ -47,6 +47,9 @@ COLORS = {
   TERRAIN = 49,
   PARTICLE = 50,
   ENTITY = 50,
+  TEXT = 50,
+  TRANSPARENT_BREAKABLE = 24,
+  TRANSPARENT_FALSE_WALL = 29,
 }
 
 for i = 1, 10 do
@@ -66,7 +69,7 @@ function colors.build_color_palette()
     pal(BASE_COLOR + #AZURE_ABYSS + i, c, 2)
   end
   for i, c in ipairs(COLORS.DARK) do
-    local f = flr(255 - i / 9 * 255)
+    local f = flr(255 - (i-1) / 9 * 255)
     pal(c, f | f << 8 | f << 16 , 2)
   end
 
@@ -99,11 +102,18 @@ function colors.build_color_palette()
   for i = 0, 63 do
     -- transparent with respect to base palette
     colortable:set(i, COLORS.HARD_DARK, COLORS.DARK[#COLORS.DARK])
+
+
+    -- transparent colors for editor clarity
+    -- TODO)) flashlight should make invisible?
+    colortable:set(i, COLORS.TRANSPARENT_FALSE_WALL, i)
+    colortable:set(i, COLORS.TRANSPARENT_BREAKABLE, COLORS.TERRAIN)
   end
 
   colortable:poke(0x8000)
   -- set_spr(1, colortable)
-  set_clipboard(pod(colortable, 0x0, {pod_type="image"}))
+  -- good to debug the colortable
+  set_clipboard(pod(colortable, 0x7, {pod_type="image"}))
 
 	--poke the bit that makes colortable work for shapes(circ,rect etc.), the bit for sprites
 	--is already set by default.

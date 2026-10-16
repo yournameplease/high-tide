@@ -43,7 +43,9 @@ function lighting.light_vignette()
   --   r0 = lerp(air / fast_cut, -10, 40)
   -- end
 
-  r0 = lerp(air / PLAYER_BASE_AIR, -5, 70)
+  local air_max = BASE_AIR() - PLAYER_AIR_DELAY
+  local air_cur = min(air, air_max)
+  r0 = lerp(air_cur / air_max, -5, 70)
 
   circfill(CENTER_X, CENTER_Y, r0, 0x800000000 | COLORS.HARD_DARK)
   fillp(0xa5a5)

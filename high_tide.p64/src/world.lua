@@ -1,3 +1,4 @@
+local actor = require "src.actor"
 
 local WATER_X_AMP = 0.0002
 local WATER_Y_AMP = 0.0006
@@ -79,8 +80,32 @@ function World:draw()
   camera()
 end
 
+local CARDINAL_OFFSETS = {
+  vec(0, 1),
+  vec(0, -1),
+  vec(1, 0),
+  vec(-1, 0),
+}
+
 function World:break_tile(pos)
+  local t = self.tiles:get(pos.x, pos.y)
   self.tiles:set(pos.x, pos.y, 0)
+
+  actor.shotgun_particles(
+    pos + vec(0.5, 0.5),
+    vec(0, 0),
+    ACTOR_FRIC,
+    PARTICLE_LIFESPAN,
+    10,
+    0.05,
+    COLORS.TERRAIN
+  )
+
+  for _,o in ipairs(CARDINAL_OFFSETS) do
+    if self.tiles:get(pos.x + o.x, pos.y + o.y) == t then
+      self:break_tile(pos + o)
+    end
+  end
 end
 
 return world
