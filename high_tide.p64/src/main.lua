@@ -132,7 +132,7 @@ function _init()
   colors.build_color_palette()
   
   world = world_mod.new("map/shallows.map")
-  p = player_mod.new(10, 9, 0)
+  p = player_mod.new(14, 9, 0)
 
 
   for x = 0, tiles:width() - 1 do
