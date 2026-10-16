@@ -153,7 +153,7 @@ end
 
 function actor.bubble_spawner(pos)
   local self = setmetatable({
-    type = "bubble",
+    type = "bubble_spawner",
     pos = pos,
     t = 0,
     spawn_time = BUBBLE_LIFESPAN,
