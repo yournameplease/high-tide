@@ -105,8 +105,9 @@ function colors.build_color_palette()
 
 
     -- transparent colors for editor clarity
-    colortable:set(i, COLORS.TRANSPARENT_BREAKABLE, i)
+    -- TODO)) flashlight should make invisible?
     colortable:set(i, COLORS.TRANSPARENT_FALSE_WALL, i)
+    colortable:set(i, COLORS.TRANSPARENT_BREAKABLE, COLORS.TERRAIN)
   end
 
   colortable:poke(0x8000)
