@@ -288,8 +288,8 @@ function Player:update()
       local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
       local head_pos = self.pos + step
       for _, a in ipairs(actors) do
-        if a.type == "bubble" and a.t > 4 * 60 and
-        norm_squared(head_pos - a.pos) < 0.4 then
+        if a.type == "bubble" and a.t > 4 * BUBBLE_GROW_T and
+        norm_squared(head_pos - a.pos) < 0.9 then
 
           self.in_air_bubble = true
           a.should_die = true

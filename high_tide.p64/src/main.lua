@@ -56,6 +56,8 @@ SETTINGS_Y = 12 * 8
 
 CONFIG = {
   LOG_LEVEL = "DEBUG",  
+  PEACEFUL_MODE = false,  
+  SPEEDRUN_TIMER = false,  
 }
 
 local COLOR_TABLE_ADDRS = {
@@ -339,8 +341,8 @@ function settings_init()
   main_menu = menu.new_list(
     "vertical",
     {
-      menu.button("Peaceful Mode", enter_game),
-      menu.button("Reset Data", enter_game),
+      menu.toggle("Peaceful Mode",  CONFIG.PEACEFUL),
+      menu.button("Speedrun Timer", CONFIG.SPEEDRUN_TIMER),
       menu.button("Back", return_to_menu),
     }
   )
@@ -352,7 +354,7 @@ function settings_update()
   end
   
   menu_t = menu_t + 1
-  main_menu:update()
+  settings_change = main_menu:update()
 end
 
 function settings_draw()

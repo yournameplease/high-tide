@@ -1,6 +1,7 @@
 ACTOR_FRIC = 0.95
 
 
+BUBBLE_GROW_T = 0.5 * 60
 local BUBBLE_ACCEL_TIME = 3 * 60
 local BUBBLE_ACCEL = 0.0005
 local BUBBLE_LIFESPAN = 10 * 60
@@ -142,7 +143,7 @@ function Actor:draw()
   
   local index = self.sprite_index
   if self.type == "bubble" then
-    index = index + min(self.t // (1 * 60), 3)
+    index = index + min(self.t // (BUBBLE_GROW_T), 3)
   end
   local hflip = false
   local vflip = false

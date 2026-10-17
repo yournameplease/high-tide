@@ -46,6 +46,9 @@ local menu_hover_style = text_rendering.default_style{col = COLORS.TEXT, halign 
 ---@class ButtonMenuEntry : MenuEntry
 ---@field type "button"
 ---@field handler function()
+
+---@class ToggleMenuEntry : MenuEntry
+---@field type "toggle"
  
 ---@class Menu
 ---@field type string
@@ -262,6 +265,21 @@ function menu.button(
   }
 end
 
+---@param key string
+---@return ToggleMenuEntry
+function menu.toggle(
+  key,
+  value
+)
+  log.debug("toggle", key, value)
+  return {
+    type = "toggle",
+    key = key,
+    text = key,
+    value = value,
+  }
+end
+
 --@return boolean value_change
 function Menu:update()
   local value_change = false
@@ -321,6 +339,12 @@ function Menu:update()
     ---@cast entry ButtonMenuEntry
     if btnp(4) then
       entry.handler(self)
+      value_change = true
+    end
+  elseif entry.type == "toggle" then
+    ---@cast entry ButtonMenuEntry
+    if btnp(4) then
+      entry.value = not entry.value
       value_change = true
     end
   elseif entry.type == "accordion" then
@@ -398,20 +422,22 @@ function Menu:layout(gui)
   	))
 
 
-  	local LABEL_FAC = 0.55
+  	local LABEL_FAC = 0.5
     
-  	if not e.type == "button" then
-  	gui:push_rect(layout.new_rect_at(
-  		vec(0., 0.5),
-  		vec(BOX_WIDTH * LABEL_FAC -2*THEME.PANEL_PAD, THEME.ROW_H)
-  	))
+  	if e.type ~= "button" then
+    	gui:push_rect(layout.new_rect_at(
+    		vec(0., 0.5),
+    		vec(BOX_WIDTH * LABEL_FAC -2*THEME.PANEL_PAD, THEME.ROW_H)
+    	))
     	sw.text(gui, font_cache, e.text, menu_style)
-  	gui:pop_rect()
+    	gui:pop_rect()
   	end
   	
 
   	local is_hovered = index == i
-  	if e.type == "list" or (e.type == "grid" and not e.active) then
+  	if e.type == "list"
+  	  or (e.type == "grid" and not e.active)
+  	  or e.type == "toggle" then
     	gui:push_rect(layout.new_rect_at(
     		vec(1., 0.5),
     		vec(BOX_WIDTH * (1-LABEL_FAC) -2*THEME.PANEL_PAD, THEME.ROW_H)
@@ -419,10 +445,15 @@ function Menu:layout(gui)
 
       	-- local txt = tostr(o.options[o.index])
       	local txt = tostr(e.value)
+      	if e.type == "toggle" then
+        	txt = e.value and "[X]" or "[ ]"
+    	  else
+        	txt = chr(139) .. txt .. chr(145)
+    	  end
+
         if is_hovered then
-        	local text = chr(139) .. txt .. chr(145)
           sw.panel(gui, 7, 3)
-        	sw.text(gui, font_cache, text, menu_hover_style)
+        	sw.text(gui, font_cache, txt, menu_hover_style)
         else
         	sw.text(gui, font_cache, txt, menu_style)
       	end
