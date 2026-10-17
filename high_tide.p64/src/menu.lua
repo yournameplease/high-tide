@@ -1,15 +1,17 @@
 local crab = require("crab.crab_gui.gui")
 local layout = require("crab.crab_gui.layout")
 local sw = require("crab.crab_gui.std_widgets")
-local widgets = require("src.widgets")
 local text_rendering = require("crab.crab_gui.text_rendering")
 local font_cache = text_rendering.new_font_cache()
-local animation = require "src.actor.animation"
 local dtm = require "src.util.draw_target_manager"
 
+font_cache:add("widesquat", fetch("fonts/widesquat.font"))
 
-local menu_style = text_rendering.default_style{col = 7, halign = "center", valign = "center", primary_font = "p8"}
-local menu_hover_style = text_rendering.default_style{col = 32, halign = "center", valign = "center", primary_font = "p8"}
+local menu_style = text_rendering.default_style{col = COLORS.TEXT, halign = "center", valign = "center", primary_font = "widesquat"}
+local menu_hover_style = text_rendering.default_style{col = COLORS.TEXT, halign = "center", valign = "center", primary_font = "widesquat"}
+
+-- I ripped this from a WIP game of mine and hacked off the things I don't need here
+-- this code is a mess now, avert your eyes
 
 ---@alias MenuDirection
 ---| "vertical"
@@ -45,10 +47,6 @@ local menu_hover_style = text_rendering.default_style{col = 32, halign = "center
 ---@field type "button"
 ---@field handler function()
  
----@class AccordionMenuEntry : MenuEntry
----@field type "accordion"
----@field handler function()
-
 ---@class Menu
 ---@field type string
 ---@field update function(self)
@@ -264,30 +262,6 @@ function menu.button(
   }
 end
 
----@param key string
----@return ButtonMenuEntry
-function menu.accordion(
-  key
-)
-  return {
-    type = "accordion",
-    key = key,
-    text = key,
-    active = false,
-  }
-end
-
----@param key string
----@return GridMenuEntry
-function menu.color_picker_entry(
-  key,
-  c
-)
-  return menu.grid_entry(
-    key, 8, 4, menu.count_fn(8, 4), c % 8, c // 8, c
-  )
-end
-
 --@return boolean value_change
 function Menu:update()
   local value_change = false
@@ -314,28 +288,7 @@ function Menu:update()
       if btnp(2) then step = step - 1 end
       if btnp(3) then step = step + 1 end
 
-      if step > 0 then
-        if entry.type == "accordion" and entry.active == false then
-          repeat
-            self.index = mod_t(self.index + 1, #self.entries)
-            entry = self.entries[self.index]
-          until entry.type == "accordion" or self.index == 1
-        else
-          self.index = mod_t(self.index + 1, #self.entries)
-        end
-      elseif step < 0 then
-        local prev_accordian_index = self.index
-        repeat
-          prev_accordian_index = mod_t(prev_accordian_index - 1, #self.entries)
-        until self.entries[prev_accordian_index].type == "accordion" or prev_accordian_index == 1 
-
-        local prev_accordian_entry = self.entries[prev_accordian_index]
-        if prev_accordian_entry.type == "accordion" and prev_accordian_entry.active == false then
-          self.index = prev_accordian_index
-        else
-          self.index = mod_t(self.index - 1, #self.entries)
-        end
-      end
+      self.index = self.index + step
     else
       error()
     end
@@ -425,10 +378,9 @@ function Menu:layout(gui)
   is_collapsed = false
   
 	gui:push_rect(layout.new_rect_at(
-		vec(0, 0.25),
+		vec(0.5, 0.75),
 		vec(BOX_WIDTH, full_h)
 	))
-	widgets.panel(gui, 21, THEME.UI_R, 7, THEME.UI_BORDER_PAD)
 	gui:push_rect(layout.new_rect_at(
 		vec(0.5, 0.5),
 		vec(BOX_WIDTH-2*THEME.PANEL_PAD, full_h-2*THEME.PANEL_PAD)
@@ -448,12 +400,14 @@ function Menu:layout(gui)
 
   	local LABEL_FAC = 0.55
     
+  	if not e.type == "button" then
   	gui:push_rect(layout.new_rect_at(
   		vec(0., 0.5),
   		vec(BOX_WIDTH * LABEL_FAC -2*THEME.PANEL_PAD, THEME.ROW_H)
   	))
     	sw.text(gui, font_cache, e.text, menu_style)
   	gui:pop_rect()
+  	end
   	
 
   	local is_hovered = index == i
@@ -473,30 +427,18 @@ function Menu:layout(gui)
         	sw.text(gui, font_cache, txt, menu_style)
       	end
     	gui:pop_rect()
-  	elseif e.type == "grid" and e.active then
+  	elseif e.type == "button" then
     	gui:push_rect(layout.new_rect_at(
-    		vec(1., 0.5),
-    		vec(BOX_WIDTH * (1-LABEL_FAC) -2*THEME.PANEL_PAD, e.h * CELL_SIDE)
+    		vec(0.5, 0.5),
+    		vec(BOX_WIDTH -2*THEME.PANEL_PAD, THEME.ROW_H)
     	))
-    	widgets.colorpicker(gui, CELL_SIDE, 8, 4, e.x, e.y)
-    	gui:pop_rect()
-  	elseif e.type == "button" and is_hovered then
-    	gui:push_rect(layout.new_rect_at(
-    		vec(1., 0.5),
-    		vec(BOX_WIDTH * (1-LABEL_FAC) -2*THEME.PANEL_PAD, THEME.ROW_H)
-    	))
-      	local text = chr(142)
-        sw.panel(gui, 7, 3)
-      	sw.text(gui, font_cache, text, menu_hover_style)
-    	gui:pop_rect()
-  	elseif e.type == "accordion" and is_hovered then
-    	gui:push_rect(layout.new_rect_at(
-    		vec(1., 0.5),
-    		vec(BOX_WIDTH * (1-LABEL_FAC) -2*THEME.PANEL_PAD, THEME.ROW_H)
-    	))
-      	local text = chr(142)
-        sw.panel(gui, 7, 3)
-      	sw.text(gui, font_cache, text, menu_hover_style)
+      	local text = e.text
+        if is_hovered then
+        	sw.text(gui, font_cache, "> " .. text .. " <", menu_hover_style)
+      	else
+        	sw.text(gui, font_cache, text, menu_style)
+      	end
+        -- sw.panel(gui, 7, 3)
     	gui:pop_rect()
   	end
 

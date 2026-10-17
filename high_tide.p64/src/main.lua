@@ -23,12 +23,15 @@ require "src.util"
 require "src.util.log"
 ---@alias vec2 userdata
 
+local crab = require "crab.crab_gui.gui"
 local dtm = require "src.util.draw_target_manager"
 local colors = require "src.colors"
 local lighting = require "src.lighting"
 local world_mod = require "src.world"
 local player_mod = require "src.player"
 local actor = require "src.actor"
+local menu = require "src.menu"
+local gui
 
 local PLAYER_LIGHT_STEP_FACTOR = 5
 -- in pixels
@@ -81,6 +84,13 @@ FLAGS = {
   TABLET_COUNT = 0,
 }
 
+THEME = {
+  UI_PAD = 2,
+  ROW_H = 10,
+  PANEL_PAD = 10,
+  UI_BORDER_PAD = 0,
+}
+
 function apply_color_table(color_table_sprite, idx)
   idx = idx or 0
 	local sprite=get_spr(color_table_sprite)
@@ -130,10 +140,19 @@ end
 
 function _init()
   colors.build_color_palette()
-  
+  vid(VID)
+  screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
+
+  gui = crab.new()
+
+  menu_init()
+  _update = menu_update
+  _draw = menu_draw
+end
+
+function game_init()
   world = world_mod.new("map/shallows.map")
   p = player_mod.new(14, 9, 0)
-
 
   for x = 0, tiles:width() - 1 do
     for y = 0, tiles:height() - 1 do
@@ -145,17 +164,14 @@ function _init()
     end
   end
   
-  screen_buffer = userdata("u8", SCREEN_W, SCREEN_H)
-
   messages = {
     strings = {},
     t = 0,
   }
-  
-  vid(VID)
+ 
 end
 
-function _draw()
+function game_draw()
   local y = p.pos.y
   
   dtm.push_target(screen_buffer)
@@ -217,7 +233,7 @@ function _draw()
   -- print("BATTERY: "..p.battery // 60)
 end
  
-function _update()
+function game_update()
   global_t = global_t + 1
   world:update()
 
@@ -244,3 +260,39 @@ function _update()
     end
   end
 end
+
+function enter_game()
+  game_init()
+  _update = game_update
+  _draw = game_draw
+end
+
+function menu_init()
+  main_menu = menu.new_list(
+    "vertical",
+    {
+      menu.button("Play", enter_game),
+      menu.button("Settings", menu.set_default),
+    }
+  )
+
+  main_menu_map = fetch("map/main_menu.map")[1].bmp
+end
+
+function menu_update()
+  main_menu:update()
+end
+
+function menu_draw()
+  gui:flush()
+  main_menu:layout(gui)
+  gui:event_step()
+  cls(COLORS.BG)
+
+  map(main_menu_map)
+  local w = measure_string("HIGH TIDE")
+  print("HIGH TIDE", CENTER_X - w / 2, 10)
+  -- print("TIDE", CENTER_X - 20 , 30)
+  gui:draw()
+end
+
