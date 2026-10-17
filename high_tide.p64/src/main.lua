@@ -50,6 +50,10 @@ local FLASHLIGHT_START = 10
 local FLASHLIGHT_END = 80
 local FLASHLIGHT_STEPS = 9
 
+MENU_LERP_T = 1 * 60
+MENU_Y = 0
+SETTINGS_Y = 12 * 8
+
 CONFIG = {
   LOG_LEVEL = "DEBUG",  
 }
@@ -267,12 +271,33 @@ function enter_game()
   _draw = game_draw
 end
 
+function enter_menu()
+  menu_init()
+  _update = menu_update
+  _draw = menu_draw
+end
+
+function return_to_menu()
+  menu_init()
+  _update = menu_update
+  _draw = menu_draw
+  lerp_t = MENU_LERP_T
+end
+
+function enter_settings()
+  settings_init()
+  _update = settings_update
+  _draw = settings_draw
+end
+
 function menu_init()
+  menu_t = 0
+  lerp_t = 0
   main_menu = menu.new_list(
     "vertical",
     {
       menu.button("Play", enter_game),
-      menu.button("Settings", menu.set_default),
+      menu.button("Settings", enter_settings),
     }
   )
 
@@ -280,19 +305,69 @@ function menu_init()
 end
 
 function menu_update()
+  if lerp_t > 0 then
+    lerp_t = lerp_t - 1
+  end
+  menu_t = menu_t + 1
   main_menu:update()
 end
 
 function menu_draw()
+  local y = lerp(lerp_t / MENU_LERP_T, MENU_Y, SETTINGS_Y)
+  local map_offset = 2*cos(menu_t / 1200)
+  
   gui:flush()
   main_menu:layout(gui)
   gui:event_step()
   cls(COLORS.BG)
 
-  map(main_menu_map)
-  local w = measure_string("HIGH TIDE")
-  print("HIGH TIDE", CENTER_X - w / 2, 10)
-  -- print("TIDE", CENTER_X - 20 , 30)
-  gui:draw()
+  map(main_menu_map, 0, 0, 0, map_offset - y, 20, 5)
+  map(main_menu_map, 0, 5, 0, 8 * 5 - y)
+
+  if lerp_t <= 0 then
+    local w = measure_string("HIGH TIDE")
+    print("HIGH TIDE", CENTER_X - w / 2, 8)
+    -- print("TIDE", CENTER_X - 20 , 30)
+    gui:draw()
+  end
+end
+
+function settings_init()
+  lerp_t = MENU_LERP_T
+  main_menu = menu.new_list(
+    "vertical",
+    {
+      menu.button("Peaceful Mode", enter_game),
+      menu.button("Reset Data", enter_game),
+      menu.button("Back", return_to_menu),
+    }
+  )
+end
+
+function settings_update()
+  if lerp_t > 0 then
+    lerp_t = lerp_t - 1
+  end
+  
+  menu_t = menu_t + 1
+  main_menu:update()
+end
+
+function settings_draw()
+  local map_offset = 2*cos(menu_t / 1200)
+
+  gui:flush()
+  main_menu:layout(gui)
+  gui:event_step()
+  cls(COLORS.BG)
+
+  local y = lerp(lerp_t / MENU_LERP_T, SETTINGS_Y, MENU_Y)
+  map(main_menu_map, 0, 0, 0, map_offset - y, 20, 5)
+  map(main_menu_map, 0, 5, 0, 8 * 5 - y)
+  if lerp_t <= 0 then
+    local w = measure_string("SETTINGS")
+    print("SETTINGS", CENTER_X - w / 2, 24)
+    gui:draw()
+  end
 end
 
