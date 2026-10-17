@@ -65,7 +65,6 @@ local COLOR_TABLE_ADDRS = {
   0xB000,
 }
 
-local global_t = 0
 local screen_buffer
 
 -- globals (eww) for convenience
@@ -155,8 +154,11 @@ function _init()
 end
 
 function game_init()
+  global_t = 0
   world = world_mod.new("map/shallows.map")
   p = player_mod.new(14, 9, 0)
+  p.air = 0
+  p:respawn()
 
   for x = 0, tiles:width() - 1 do
     for y = 0, tiles:height() - 1 do
