@@ -56,6 +56,9 @@ SETTINGS_Y = 12 * 8
 
 CONFIG = {
   LOG_LEVEL = "DEBUG",  
+}
+
+local SAVE_DATA = {
   PEACEFUL_MODE = false,  
   SPEEDRUN_TIMER = false,  
 }
@@ -341,8 +344,8 @@ function settings_init()
   main_menu = menu.new_list(
     "vertical",
     {
-      menu.toggle("Peaceful Mode",  CONFIG.PEACEFUL),
-      menu.button("Speedrun Timer", CONFIG.SPEEDRUN_TIMER),
+      menu.toggle("Peaceful Mode",  SAVE_DATA.PEACEFUL_MODE),
+      menu.toggle("Speedrun Timer", SAVE_DATA.SPEEDRUN_TIMER),
       menu.button("Back", return_to_menu),
     }
   )
@@ -355,6 +358,13 @@ function settings_update()
   
   menu_t = menu_t + 1
   settings_change = main_menu:update()
+
+  if settings_change then
+    SAVE_DATA.PEACEFUL_MODE = main_menu:get_value"Peaceful Mode" or SAVE_DATA.PEACEFUL_MODE
+    SAVE_DATA.SPEEDRUN_TIMER = main_menu:get_value"Speedrun Timer" or SAVE_DATA.SPEEDRUN_TIMER
+    log.debug("save data", SAVE_DATA.PEACEFUL_MODE, SAVE_DATA.SPEEDRUN_TIMER)
+    store("/appdata/high_tide.pod", SAVE_DATA)
+  end
 end
 
 function settings_draw()

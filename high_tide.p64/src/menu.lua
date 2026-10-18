@@ -271,7 +271,6 @@ function menu.toggle(
   key,
   value
 )
-  log.debug("toggle", key, value)
   return {
     type = "toggle",
     key = key,
@@ -452,7 +451,7 @@ function Menu:layout(gui)
     	  end
 
         if is_hovered then
-          sw.panel(gui, 7, 3)
+          sw.panel(gui, COLORS.BG + 1, 3)
         	sw.text(gui, font_cache, txt, menu_hover_style)
         else
         	sw.text(gui, font_cache, txt, menu_style)
