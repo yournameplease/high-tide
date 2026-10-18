@@ -450,9 +450,12 @@ function credits_draw()
   
   color(COLORS.TEXT)
   -- if global_t < 600 then
+    local s1 = "HIGH TIDE"
+    local w1 = measure_string(s1)
+    print(s1, CENTER_X - w1 / 2, 4)
     local s1 = "A sandfolk returns to Atlantis."
     local w1 = measure_string(s1)
-    print(s1, CENTER_X - w1 / 2, 10)
+    print(s1, CENTER_X - w1 / 2, 14)
   -- else
     local s2 = "A game by yournameplease."
     local w2 = measure_string(s2)
