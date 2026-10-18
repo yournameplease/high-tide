@@ -84,7 +84,7 @@ messages = {}
 --- global flags and such
 FLAGS = {
   IS_HELMET = false,
-  IS_FLASHLIGHT = false,
+  IS_FLASHLIGHT = true,
   IS_DIG_ALLOWED = false,
   TABLET_COUNT = 0,
 }
@@ -238,7 +238,7 @@ function game_draw()
   color(7)
   -- print(stat(1))
   -- print("AIR: "..p.air // 60)
-  -- print("BATTERY: "..p.battery // 60)
+  print("BATTERY: "..p.battery // 60)
 end
  
 function game_update()
