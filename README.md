@@ -1,10 +1,5 @@
-
 Project for [Revival Jam 2026](https://itch.io/jam/revival-jam-2026)
 
-Usage:
+`crab` library is by abledbody: https://github.com/abledbody/crab_gui
 
-Clone to picotron location `/projects/games/high-tide`.
-
-`src/` contains source code.
-
-`high_tide.p64` contains assets. 
+Sprites from `0.gfx` files are Creative Commons Zero: https://creativecommons.org/publicdomain/zero/1.0/
