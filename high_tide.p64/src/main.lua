@@ -238,7 +238,7 @@ function game_draw()
   color(7)
   -- print(stat(1))
   -- print("AIR: "..p.air // 60)
-  print("BATTERY: "..p.battery // 60)
+  -- print("BATTERY: "..p.battery // 60)
 end
  
 function game_update()
