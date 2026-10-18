@@ -140,11 +140,19 @@ function Player:update()
       self.is_flashlight = not self.is_flashlight
 
       if self.battery < 0 then self.battery = BATTERY_WEAK_DURATION end
+
+      sfx(7)
     end
 
     if self.is_flashlight then
       self.battery = self.battery - 1
       if self.battery < 0 then self.is_flashlight = false end
+      if self.battery == BATTERY_WEAK_DURATION or self.battery == 0 then
+        sfx(7)
+      end
+    else
+      -- recharge while not on
+      self.battery = min(self.battery + 2, PLAYER_BASE_BATTERY)
     end
     
     if allow_input then

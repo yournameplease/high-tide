@@ -126,7 +126,7 @@ function pickup_tile(pos)
   if t == 28 then
       sfx(6)
     FLAGS.IS_FLASHLIGHT = true
-    push_messages({"Found a flashlight!", "Press Z to toggle."})
+    push_messages({"Found a flashlight!", chr(142) .. " to toggle."})
   elseif t == 29 then
       sfx(6)
     FLAGS.IS_HELMET = true
@@ -216,6 +216,9 @@ function game_draw()
       flashlight_s = flashlight_s | 0x60000
     elseif p.dir == 3 then
       flashlight_s = flashlight_s | 0x10000
+    end
+    if p.battery < BATTERY_WEAK_DURATION then
+      flashlight_s = flashlight_s - 8
     end
     lighting.light_spr(flashlight_s, light_start.x, light_start.y)
 
