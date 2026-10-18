@@ -50,6 +50,7 @@ COLORS = {
   TEXT = 50,
   TRANSPARENT_BREAKABLE = 24,
   TRANSPARENT_FALSE_WALL = 29,
+  FLASHLIGHT = 10
 }
 
 for i = 1, 10 do
@@ -81,6 +82,8 @@ function colors.build_color_palette()
 
   for i,c in ipairs(COLORS.DARK) do
     local dark = i - 1
+    colortable:set(COLORS.FLASHLIGHT, c, COLORS.FLASHLIGHT)
+    colortable:set(c, COLORS.FLASHLIGHT, COLORS.FLASHLIGHT)
     -- darken each of our custom colors by i steps
     for c2 = BLUE_START, BLUE_END do
       colortable:set(c2, c, max(c2 - dark, BLUE_START))
@@ -88,6 +91,8 @@ function colors.build_color_palette()
     for c2 = WHITE_START, WHITE_END do
       colortable:set(c2, c, max(c2 - dark, WHITE_START))
     end
+    colortable:set(COLORS.TRANSPARENT_FALSE_WALL, c, max(COLORS.TERRAIN - dark, WHITE_START))
+    colortable:set(COLORS.TRANSPARENT_BREAKABLE, c, max(COLORS.TERRAIN - dark, WHITE_START))
 
     for _,c2 in ipairs(COLORS.DARK) do
       -- keep the lighter when covering the two
@@ -95,8 +100,10 @@ function colors.build_color_palette()
     end
 
     for i = 0, 32 do
-      -- transparent with respect to base palette
-      colortable:set(i, c, i)
+      if i ~= COLORS.FLASHLIGHT and i ~= COLORS.TRANSPARENT_BREAKABLE and i ~= COLORS.TRANSPARENT_FALSE_WALL then
+        -- transparent with respect to base palette
+        colortable:set(i, c, i)
+      end
     end
   end
   for i = 0, 63 do
@@ -106,9 +113,15 @@ function colors.build_color_palette()
 
     -- transparent colors for editor clarity
     -- TODO)) flashlight should make invisible?
-    colortable:set(i, COLORS.TRANSPARENT_FALSE_WALL, i)
-    colortable:set(i, COLORS.TRANSPARENT_BREAKABLE, COLORS.TERRAIN)
+    -- colortable:set(i, COLORS.FLASHLIGHT, i)
+
   end
+
+  colortable:set(COLORS.TRANSPARENT_FALSE_WALL, COLORS.FLASHLIGHT, COLORS.BG + 1)
+  colortable:set(COLORS.TRANSPARENT_BREAKABLE, COLORS.FLASHLIGHT, COLORS.BG + 1)
+  colortable:set(COLORS.BG, COLORS.FLASHLIGHT, COLORS.BG + 1)
+  colortable:set(COLORS.TERRAIN, COLORS.FLASHLIGHT, COLORS.TERRAIN)
+  colortable:set(COLORS.ENTITY, COLORS.FLASHLIGHT, COLORS.ENTITY)
 
   colortable:poke(0x8000)
   -- set_spr(1, colortable)

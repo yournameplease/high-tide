@@ -2,6 +2,8 @@ local actor = require "src.actor"
 
 local DEBUG_HITBOX = false
 
+DOOR_TRANSITION_T = 1 * 60
+
 local PLAYER_PUSH_H = 0.8
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
@@ -134,15 +136,23 @@ function Player:update()
       allow_input = false
     end
     
-    if allow_input and (btnp(4) or btnp(5)) then
+    if FLAGS.IS_FLASHLIGHT and allow_input and (btnp(4) or btnp(5)) then
       self.is_flashlight = not self.is_flashlight
 
       if self.battery < 0 then self.battery = BATTERY_WEAK_DURATION end
+
+      sfx(7)
     end
 
     if self.is_flashlight then
       self.battery = self.battery - 1
       if self.battery < 0 then self.is_flashlight = false end
+      if self.battery == BATTERY_WEAK_DURATION or self.battery == 0 then
+        sfx(7)
+      end
+    else
+      -- recharge while not on
+      self.battery = min(self.battery + 2, PLAYER_BASE_BATTERY)
     end
     
     if allow_input then
@@ -278,6 +288,7 @@ function Player:update()
       end
 
       if self.push_t == 0 then
+        sfx(5)
         world:break_tile(self.hover_tile)
         self.push_t = PUSH_T
       end
@@ -288,8 +299,8 @@ function Player:update()
       local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
       local head_pos = self.pos + step
       for _, a in ipairs(actors) do
-        if a.type == "bubble" and a.t > 4 * 60 and
-        norm_squared(head_pos - a.pos) < 0.4 then
+        if a.type == "bubble" and a.t > 4 * BUBBLE_GROW_T and
+        norm_squared(head_pos - a.pos) < 0.9 then
 
           self.in_air_bubble = true
           a.should_die = true
@@ -307,22 +318,48 @@ function Player:update()
       end
     end
 
+    do -- door
+      local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
+      local head_pos = self.pos + step
+      for _, a in ipairs(actors) do
+        if a.type == "door" and
+          norm_squared(head_pos - a.pos) < 0.9 then
+          if transition_t == nil then
+            log.debug("Game end")
+            transition_t = DOOR_TRANSITION_T
+            finish_t = global_t
+          end
+        end 
+      end
+    end
+
     if self.air_bubble_t > 0 then
       self.air_bubble_t = self.air_bubble_t - 1
       self.air = self.air + BASE_AIR() * 0.01
     elseif self.in_air_tile then
+      if in_not_air then
+        --stupid
+        sfx(5)
+        in_not_air = false
+      end
+
       self.respawn_point = self.pos
-    
+   
       self.air = self.air + BASE_AIR() * 0.01
+
       -- consider restricting this to "sun" tiles?
       self.battery = PLAYER_BASE_BATTERY
     elseif self.in_air_bubble and not self.is_air_bubbling then
+      sfx(2)
       self.in_air_bubble = false
       self.air_bubble_t = PLAYER_AIR_BUBBLE_TIME
     elseif self.respawn_t > 0 then
       self.air = self.air + BASE_AIR() * 0.01
     else
-      self.air = self.air - 1
+      if not SAVE_DATA.PEACEFUL_MODE then
+        self.air = self.air - 1
+      end
+      in_not_air = true
     end
 
     
@@ -330,7 +367,7 @@ function Player:update()
       self.air = min(self.air, BASE_AIR())
     end
 
-    if self.air < 0 then
+    if self.air < -60 then
       self:respawn()
     end
 end
