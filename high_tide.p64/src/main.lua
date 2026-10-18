@@ -251,7 +251,9 @@ function game_draw()
   -- print(stat(1))
   -- print("AIR: "..p.air // 60)
   -- print("BATTERY: "..p.battery // 60)
-  print(to_time_string(global_t), 1, 1)
+  if SAVE_DATA.SPEEDRUN_TIMER then
+    print(to_time_string(global_t), 1, 1)
+  end
 end
  
 function game_update()
