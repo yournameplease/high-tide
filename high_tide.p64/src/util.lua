@@ -9,7 +9,10 @@ function to_time_string(frames)
   local seconds = (frames % 3600) / 60
   local minutes = frames // 60 // 60
 
-  minutes = min(minutes, 99)
+  if minutes >= 100 then
+    minutes = 99
+    seconds = 59 + 59/60
+  end
 
   local fstring
   if seconds < 10 then

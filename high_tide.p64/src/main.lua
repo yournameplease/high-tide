@@ -79,7 +79,7 @@ p = {}
 actors = {}
 tiles = {}
 transition_t = nil
-finish_t = nil
+finish_t = 100 * 60 * 60
 
 ---@class Messages
 ---@field t integer
@@ -420,10 +420,12 @@ end
 
 
 function credits_init()
+  global_t = 0
   credits_map = fetch("map/credits.map")[1].bmp
 end
 
 function credits_update()
+  global_t = global_t + 1
   if transition_t then 
     transition_t = transition_t - 1
     if transition_t <= 0 then
@@ -447,18 +449,21 @@ function credits_draw()
   rrectfill(0, 0, SCREEN_W, SCREEN_H, 0, COLORS.DARK[7])
   
   color(COLORS.TEXT)
-  -- local s1 = "A sandfolk returns to Atlantis."
-  -- local w1 = measure_string(s1)
-  -- print(s1, CENTER_X - w1 / 2, 12)
-  local s2 = "A game by yournameplease."
-  local w2 = measure_string(s2)
-  print(s2, CENTER_X - w2 / 2, 10)
+  -- if global_t < 600 then
+    local s1 = "A sandfolk returns to Atlantis."
+    local w1 = measure_string(s1)
+    print(s1, CENTER_X - w1 / 2, 10)
+  -- else
+    local s2 = "A game by yournameplease."
+    local w2 = measure_string(s2)
+    print(s2, CENTER_X - w2 / 2, 30)
+  -- end
   local s3 = "Completion time: " .. to_time_string(finish_t)
   local w3 = measure_string(s3)
-  print(s3, CENTER_X - w3 / 2, 34)
+  print(s3, CENTER_X - w3 / 2, 50)
 
   local s4 = "Return to menu: " .. chr(142)
   local w4 = measure_string(s4)
-  print(s4, CENTER_X - w4 / 2, 74)
+  print(s4, CENTER_X - w4 / 2, 80)
 end
 
