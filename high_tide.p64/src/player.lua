@@ -359,7 +359,7 @@ function Player:update()
       self.air = min(self.air, BASE_AIR())
     end
 
-    if self.air < 0 then
+    if self.air < -60 then
       self:respawn()
     end
 end
