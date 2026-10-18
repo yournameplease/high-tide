@@ -124,23 +124,28 @@ function pickup_tile(pos)
   local t = world.tiles:get(pos.x, pos.y)
 
   if t == 28 then
+      sfx(6)
     FLAGS.IS_FLASHLIGHT = true
     push_messages({"Found a flashlight!", "Press Z to toggle."})
   elseif t == 29 then
+      sfx(6)
     FLAGS.IS_HELMET = true
     p.air = p.air * PLAYER_HELMET_AIR / PLAYER_BASE_AIR
     p.respawn_t = 60 -- forces to stop and regain air
     push_messages({"Found a helmet!", "Breathe for longer underwater."})
   elseif t == 30 then
+      sfx(6)
     FLAGS.IS_DIG_ALLOWED = true
     push_messages({"Found a shovel!", "Push walls to dig."})
   elseif t == 31 then
     FLAGS.TABLET_COUNT = FLAGS.TABLET_COUNT + 1
     if FLAGS.TABLET_COUNT == 4 then
       world:open_door()
+      sfx(3)
       push_messages({"Found a tablet!", "Something shifted."})
     else
-      push_messages({"Found a tablet!", "1 / ???"})
+      sfx(4)
+      push_messages({"Found a tablet!", FLAGS.TABLET_COUNT .. " / 4"})
     end
   else
     log.warn("Tried to pickup invalid tile", t)
@@ -239,10 +244,11 @@ function game_draw()
     print(messages.strings[1], CENTER_X - w / 2, MESSAGE_Y + 2, COLORS.TEXT)
   end
 
-  color(7)
+  color(COLORS.TEXT)
   -- print(stat(1))
   -- print("AIR: "..p.air // 60)
   -- print("BATTERY: "..p.battery // 60)
+  print(to_time_string(global_t), 1, 1)
 end
  
 function game_update()

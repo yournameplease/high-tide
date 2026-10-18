@@ -11,5 +11,12 @@ function to_time_string(frames)
 
   minutes = min(minutes, 99)
 
-  return string.format("%.2d:%02.2f", minutes, seconds)
+  local fstring
+  if seconds < 10 then
+    -- surely there is a flag for this...
+    fstring = "%.2d:0%.2f"
+  else
+    fstring = "%.2d:%.2f"
+  end
+  return string.format(fstring, minutes, seconds)
 end

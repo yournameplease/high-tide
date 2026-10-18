@@ -136,7 +136,7 @@ function Player:update()
       allow_input = false
     end
     
-    if allow_input and (btnp(4) or btnp(5)) then
+    if FLAGS.IS_FLASHLIGHT and allow_input and (btnp(4) or btnp(5)) then
       self.is_flashlight = not self.is_flashlight
 
       if self.battery < 0 then self.battery = BATTERY_WEAK_DURATION end
@@ -280,6 +280,7 @@ function Player:update()
       end
 
       if self.push_t == 0 then
+        sfx(5)
         world:break_tile(self.hover_tile)
         self.push_t = PUSH_T
       end
@@ -328,12 +329,20 @@ function Player:update()
       self.air_bubble_t = self.air_bubble_t - 1
       self.air = self.air + BASE_AIR() * 0.01
     elseif self.in_air_tile then
+      if in_not_air then
+        --stupid
+        sfx(5)
+        in_not_air = false
+      end
+
       self.respawn_point = self.pos
-    
+   
       self.air = self.air + BASE_AIR() * 0.01
+
       -- consider restricting this to "sun" tiles?
       self.battery = PLAYER_BASE_BATTERY
     elseif self.in_air_bubble and not self.is_air_bubbling then
+      sfx(2)
       self.in_air_bubble = false
       self.air_bubble_t = PLAYER_AIR_BUBBLE_TIME
     elseif self.respawn_t > 0 then
@@ -342,6 +351,7 @@ function Player:update()
       if not SAVE_DATA.PEACEFUL_MODE then
         self.air = self.air - 1
       end
+      in_not_air = true
     end
 
     
