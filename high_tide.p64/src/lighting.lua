@@ -47,6 +47,10 @@ function lighting.light_vignette()
   local air_cur = min(air, air_max)
   r0 = lerp(air_cur / air_max, -5, 70)
 
+  if transition_t then
+    r0 = lerp(transition_t / DOOR_TRANSITION_T, -5, 70)
+  end
+  
   circfill(CENTER_X, CENTER_Y, r0, 0x800000000 | COLORS.HARD_DARK)
   fillp(0xa5a5)
   circfill(CENTER_X, CENTER_Y, r0 - 10, 0x800000000 | COLORS.HARD_DARK)

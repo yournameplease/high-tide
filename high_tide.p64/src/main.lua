@@ -50,6 +50,7 @@ local FLASHLIGHT_START = 10
 local FLASHLIGHT_END = 80
 local FLASHLIGHT_STEPS = 9
 
+MENU_TRANSITION_T = 1 * 60
 MENU_LERP_T = 1 * 60
 MENU_Y = 0
 SETTINGS_Y = 12 * 8
@@ -58,7 +59,7 @@ CONFIG = {
   LOG_LEVEL = "DEBUG",  
 }
 
-local SAVE_DATA = {
+SAVE_DATA = {
   PEACEFUL_MODE = false,  
   SPEEDRUN_TIMER = false,  
 }
@@ -77,6 +78,8 @@ world = {}
 p = {}
 actors = {}
 tiles = {}
+transition_t = nil
+finish_t = nil
 
 ---@class Messages
 ---@field t integer
@@ -85,12 +88,7 @@ messages = {}
 
 
 --- global flags and such
-FLAGS = {
-  IS_HELMET = false,
-  IS_FLASHLIGHT = true,
-  IS_DIG_ALLOWED = false,
-  TABLET_COUNT = 0,
-}
+FLAGS = {}
 
 THEME = {
   UI_PAD = 2,
@@ -138,7 +136,12 @@ function pickup_tile(pos)
     push_messages({"Found a shovel!", "Push walls to dig."})
   elseif t == 31 then
     FLAGS.TABLET_COUNT = FLAGS.TABLET_COUNT + 1
-    push_messages({"Found a tablet!", "1 / ???"})
+    if FLAGS.TABLET_COUNT == 4 then
+      world:open_door()
+      push_messages({"Found a tablet!", "Something shifted."})
+    else
+      push_messages({"Found a tablet!", "1 / ???"})
+    end
   else
     log.warn("Tried to pickup invalid tile", t)
   end
@@ -153,9 +156,7 @@ function _init()
 
   gui = crab.new()
 
-  menu_init()
-  _update = menu_update
-  _draw = menu_draw
+  enter_menu()
 end
 
 function game_init()
@@ -245,6 +246,15 @@ function game_draw()
 end
  
 function game_update()
+  if transition_t then 
+    transition_t = transition_t - 1
+    if transition_t <= 0 then
+      enter_credits()
+      transition_t = nil
+      return
+    end 
+  end
+  
   global_t = global_t + 1
   world:update()
 
@@ -273,9 +283,22 @@ function game_update()
 end
 
 function enter_game()
+  FLAGS = {
+    IS_HELMET = false,
+    IS_FLASHLIGHT = false,
+    IS_DIG_ALLOWED = false,
+    TABLET_COUNT = 0,
+  }
+
   game_init()
   _update = game_update
   _draw = game_draw
+end
+
+function enter_credits()
+  credits_init()
+  _update = credits_update
+  _draw = credits_draw
 end
 
 function enter_menu()
@@ -383,5 +406,50 @@ function settings_draw()
     print("SETTINGS", CENTER_X - w / 2, 24)
     gui:draw()
   end
+end
+
+
+
+function credits_init()
+  credits_map = fetch("map/credits.map")[1].bmp
+end
+
+function credits_update()
+  if transition_t then 
+    transition_t = transition_t - 1
+    if transition_t <= 0 then
+      enter_menu()
+      transition_t = nil
+    end 
+  end
+  
+  if btnp(4) then
+    if transition_t == nil then
+      transition_t = MENU_TRANSITION_T
+    end
+  end
+end
+
+function credits_draw()
+
+  cls(COLORS.BG)
+  map(credits_map)
+
+  rrectfill(0, 0, SCREEN_W, SCREEN_H, 0, COLORS.DARK[7])
+  
+  color(COLORS.TEXT)
+  -- local s1 = "A sandfolk returns to Atlantis."
+  -- local w1 = measure_string(s1)
+  -- print(s1, CENTER_X - w1 / 2, 12)
+  local s2 = "A game by yournameplease."
+  local w2 = measure_string(s2)
+  print(s2, CENTER_X - w2 / 2, 10)
+  local s3 = "Completion time: " .. to_time_string(finish_t)
+  local w3 = measure_string(s3)
+  print(s3, CENTER_X - w3 / 2, 34)
+
+  local s4 = "Return to menu: " .. chr(142)
+  local w4 = measure_string(s4)
+  print(s4, CENTER_X - w4 / 2, 74)
 end
 

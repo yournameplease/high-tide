@@ -2,6 +2,8 @@ local actor = require "src.actor"
 
 local DEBUG_HITBOX = false
 
+DOOR_TRANSITION_T = 1 * 60
+
 local PLAYER_PUSH_H = 0.8
 local PLAYER_HALF_H = 0.6
 local PLAYER_HALF_W = 0.3
@@ -307,6 +309,21 @@ function Player:update()
       end
     end
 
+    do -- door
+      local step = vec_rot(PLAYER_HEAD_POINTS[2], self.dir/4)
+      local head_pos = self.pos + step
+      for _, a in ipairs(actors) do
+        if a.type == "door" and
+          norm_squared(head_pos - a.pos) < 0.9 then
+          if transition_t == nil then
+            log.debug("Game end")
+            transition_t = DOOR_TRANSITION_T
+            finish_t = global_t
+          end
+        end 
+      end
+    end
+
     if self.air_bubble_t > 0 then
       self.air_bubble_t = self.air_bubble_t - 1
       self.air = self.air + BASE_AIR() * 0.01
@@ -322,7 +339,9 @@ function Player:update()
     elseif self.respawn_t > 0 then
       self.air = self.air + BASE_AIR() * 0.01
     else
-      self.air = self.air - 1
+      if not SAVE_DATA.PEACEFUL_MODE then
+        self.air = self.air - 1
+      end
     end
 
     

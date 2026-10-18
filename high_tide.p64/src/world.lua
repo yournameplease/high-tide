@@ -5,6 +5,7 @@ local WATER_Y_AMP = 0.0006
 local WATER_X_FREQ = 10 * 60
 local WATER_Y_FREQ = 2 * 60
 local WATER_X_PHASE = 150
+local SHAKE_T = 1 * 60
 
 ---@class World
 ---@field bg userdata
@@ -33,12 +34,16 @@ function world.new(map_path)
   tiles = self.tiles
 
   self.t = 0
+  self.shake_t = 0
 
   return self
 end
 
 function World:update()
   self.t = self.t + 1
+  if self.shake_t > 0 then
+    self.shake_t = self.shake_t - 1 
+  end
   self.water_vel = vec(
     WATER_X_AMP * sin(self.t / WATER_X_FREQ + WATER_X_PHASE),
     WATER_Y_AMP * sin(self.t / WATER_Y_FREQ)
@@ -49,6 +54,11 @@ function World:draw()
   local p_pos = p.pos * TILE_FACTOR
   local cam_x = p_pos.x - CENTER_X
   local cam_y = p_pos.y - CENTER_Y
+
+  if self.shake_t > 0 then
+    cam_x = cam_x + rnd(2) - 1
+    cam_y = cam_y + rnd(2) - 1
+  end
 
   camera(0, cam_y)
 
@@ -106,6 +116,23 @@ function World:break_tile(pos)
       self:break_tile(pos + o)
     end
   end
+end
+
+function World:open_door()
+  for x = 0, tiles:width() do
+  for y = 0, tiles:height() do
+    local t = self.tiles:get(x, y)
+    if t >= 144 then
+      self.tiles:set(x, y, t + 4)
+      add(actors,
+      actor.door(
+        vec(x, y) + vec(0.5, 0.5)
+      ))
+    end
+  end
+  end
+
+  self.shake_t = SHAKE_T
 end
 
 return world

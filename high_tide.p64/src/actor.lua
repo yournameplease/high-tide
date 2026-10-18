@@ -101,6 +101,10 @@ function Actor:move()
 end
 
 function Actor:update()
+    if self.type == "door" then
+      return
+    end
+
     if self.type == "bubble" then
       if self.t < BUBBLE_ACCEL_TIME then 
         self.vel = self.vel - vec(0, BUBBLE_ACCEL)
@@ -134,6 +138,10 @@ function Actor:update()
 end
 
 function Actor:draw()
+  if self.type == "door" then
+    return
+  end
+
   local world_pos = self.pos * TILE_FACTOR
 
   if self.type == "particle" then
@@ -159,6 +167,16 @@ function actor.bubble_spawner(pos)
     t = 0,
     spawn_time = BUBBLE_LIFESPAN,
   }, Spawner)
+
+  return self
+end
+
+function actor.door(pos)
+  local self = setmetatable({
+    type = "door",
+    pos = pos,
+    t = 0,
+  }, Actor)
 
   return self
 end
